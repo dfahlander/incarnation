@@ -1,0 +1,49 @@
+Arguments: 
+  /Users/daw/.nvm/versions/node/v12.14.0/bin/node /usr/local/bin/yarn install
+
+PATH: 
+  /Library/Frameworks/Python.framework/Versions/3.7/bin:/Users/daw/.local/lib/aws/bin:/Users/daw/.nvm/versions/node/v12.14.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Library/Frameworks/Python.framework/Versions/3.7/bin:/Users/daw/.local/lib/aws/bin:/Users/daw/.nvm/versions/node/v12.14.0/bin:/Users/daw/google-cloud-sdk/bin:/Users/daw/google-cloud-sdk/bin
+
+Yarn version: 
+  1.17.3
+
+Node version: 
+  12.14.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  SyntaxError: /Users/daw/repos/incarnation/package.json: Unexpected token } in JSON at position 402
+      at JSON.parse (<anonymous>)
+      at /usr/local/lib/node_modules/yarn/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/usr/local/lib/node_modules/yarn/lib/cli.js:304:30)
+      at /usr/local/lib/node_modules/yarn/lib/cli.js:315:13
+
+npm manifest: 
+  {
+    "name": "root",
+    "private": true,
+    "devDependencies": {
+      "@types/chai": "^4.1.7",
+      "@types/jest": "^24.0.18",
+      "@types/mocha": "^5.2.5",
+      "@types/node": "^12.7.8",
+      "@types/react": "^16.8.8",
+      "chai": "^4.2.0",
+      "clare": "*",
+      "jest": "^24.9.0",
+      "lerna": "^3.20.2",
+      "mocha": "^5.2.0",
+      "prettier": "1.18.2",
+      "ts-jest": "^24.1.0",
+      "ts-node": "^8.3.0",
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
