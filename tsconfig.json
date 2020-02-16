@@ -4,6 +4,7 @@
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "importHelpers": true,
+    "jsx": "react",
     "target": "es2018",
     "module": "commonjs",
     "noImplicitAny": false,
