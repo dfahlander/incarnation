@@ -10,7 +10,9 @@ describe("entryPoint", () => {
 
     const myService = entryPoint(MyService);
 
-    const result = await myService.getNumberPlus1(3);
+    const resultPromise = myService.getNumberPlus1(3);
+    expect(resultPromise).toBeInstanceOf(Promise);
+    const result = await resultPromise;
     expect(result).toBe(4);
   });
 });
