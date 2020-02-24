@@ -1,13 +1,13 @@
-import { ContextMiddleware } from "./Context";
-import { providedContextMiddlewares } from "./inject";
+import { providedClassMapperMiddleware } from "./inject";
 import { ProvideTarget } from "./ProvideTarget";
+import { ClassMapperMiddleware } from "./Context";
 
 export function provide(instance: object) {
   while (instance[ProvideTarget]) instance = instance[ProvideTarget];
   return {
-    with(provider: ContextMiddleware) {
+    with(provider: ClassMapperMiddleware) {
       // TODO: Also accept Middlewares (class Middlewares etc)
-      providedContextMiddlewares.set(instance, provider);
+      providedClassMapperMiddleware.set(instance, provider);
     }
   };
 }
