@@ -1,22 +1,4 @@
-import { Class } from "../Class";
-import {
-  getEffectiveProps,
-  PropertyInfo,
-  getEffectiveProps2
-} from "./getEffectiveProps";
-
-export function createProxy2<T extends object>(
-  instance: T,
-  wrapper: (instance: T, propInfo: PropertyInfo) => PropertyDescriptor
-): T {
-  //const SubClass = class extends (Class as any) {};
-  const props = getEffectiveProps2(instance);
-  const externalProps: PropertyDescriptorMap = {};
-  for (const propInfo of props) {
-    externalProps[propInfo.propName] = wrapper(instance, propInfo);
-  }
-  return Object.create(instance, externalProps);
-}
+import { getEffectiveProps } from "./getEffectiveProps";
 
 export function createProxy<T extends object>(
   instance: T,

@@ -5,7 +5,7 @@ import {
   deriveContext
 } from "./Context";
 import { Class } from "./Class";
-import { createProxy, createProxy2 } from "./utils/createProxy";
+import { createProxy } from "./utils/createProxy";
 
 export const providedClassMapperMiddleware = new WeakMap<
   any,

@@ -16,14 +16,10 @@ describe("provide", () => {
       }
     }
 
-    console.log("Before inject");
     const myService = inject(MyService);
-    console.log("After inject");
     provide(myService).with((Class, next) =>
       Class === MyService ? MyAlternateService : next(Class)
     );
-    console.log("After provide");
-
     expect(myService.sayHi()).toBe("Ho!");
   });
 
