@@ -6,7 +6,7 @@ export type ClassMapperMiddleware = (Class: Class, next: ClassMapper) => Class;
 export interface Context {
   readonly getImpl: <T>(Class: Class<T>) => Class<T>;
   children: null | WeakMap<ClassMapperMiddleware, Context>;
-  //cachedSingletons: null | WeakMap<Class<any>, any>;
+  cachedSingletons?: null | WeakMap<Class<any>, any>;
 }
 
 export interface StaticContext {
@@ -17,8 +17,8 @@ export interface StaticContext {
 
 export const rootContext: Context = {
   getImpl: Class => Class,
-  children: null
-  //cachedSingletons: null
+  children: null,
+  cachedSingletons: null
 };
 
 let current: Context = rootContext;

@@ -4,7 +4,8 @@
   "description": "Turn async code reactive",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test:debug": "echo Open chrome://inspect and click DevToops link && node --inspect ../../node_modules/.bin/jest --runInBand"
   },
   "repository": {
     "type": "git",
