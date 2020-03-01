@@ -17,8 +17,11 @@ describe("provide", () => {
     }
 
     const myService = inject(MyService);
-    provide(myService).with((Class, next) =>
-      Class === MyService ? MyAlternateService : next(Class)
+    provide(myService).with((requestedClass, mappedClass, next) =>
+      next(
+        requestedClass,
+        requestedClass === MyService ? MyAlternateService : mappedClass
+      )
     );
     expect(myService.sayHi()).toBe("Ho!");
   });

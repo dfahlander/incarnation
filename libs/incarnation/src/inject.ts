@@ -1,16 +1,14 @@
 import {
   Context,
-  ClassMapperMiddleware,
+  MWFunction,
   runInContext,
-  deriveContext
+  deriveContext,
+  resolveClass
 } from "./Context";
 import { Class } from "./Class";
 import { createProxy } from "./utils/createProxy";
 
-export const providedClassMapperMiddleware = new WeakMap<
-  any,
-  ClassMapperMiddleware
->();
+export const providedMWFunctions = new WeakMap<any, MWFunction>();
 
 //export const cachedSingletons = new WeakMap<Class, object>();
 
@@ -45,12 +43,12 @@ export function inject<T extends object>(Class: Class<T>): T {
       // External call comes in here
       const outerCtx = Context.current;
       // Apply context middlewares to maybe create a derivated context before calling origFn
-      const cmMiddleware = providedClassMapperMiddleware.get(proxy);
-      const ctx: Context = cmMiddleware
-        ? deriveContext(outerCtx, cmMiddleware)
+      const mwFunction = providedMWFunctions.get(proxy);
+      const ctx: Context = mwFunction
+        ? deriveContext(outerCtx, mwFunction)
         : outerCtx;
       // Find implementation class
-      const ConcreteClass = ctx.getImpl(Class);
+      const ConcreteClass = resolveClass(ctx, Class);
       // Find or create instance
       let { cachedSingletons } = ctx;
       if (!cachedSingletons)

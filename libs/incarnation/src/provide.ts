@@ -1,36 +1,44 @@
-import { providedClassMapperMiddleware } from "./inject";
+import { providedMWFunctions } from "./inject";
 import { ProvideTarget } from "./ProvideTarget";
-import { ClassMapperMiddleware } from "./Context";
+import { MWFunction } from "./Context";
 import { Middleware } from "./Middleware";
 import { Class } from "./Class";
 
 export function provide(instance: object) {
   while (instance[ProvideTarget]) instance = instance[ProvideTarget];
   return {
-    with(provider: ClassMapperMiddleware | Middleware<any> | Class<any>) {
-      // TODO: Also accept Middlewares (class Middlewares etc)
-      if ("classMapperMW" in provider)
-        providedClassMapperMiddleware.set(instance, provider.classMapperMW);
-      else if (
-        provider.prototype &&
-        Object.getPrototypeOf(provider.prototype) !== Object.prototype
-      )
-        providedClassMapperMiddleware.set(
-          instance,
-          getClassProvider(provider as Class<any>)
-        );
-      else
-        providedClassMapperMiddleware.set(
-          instance,
-          provider as ClassMapperMiddleware
-        );
+    with(provider: MWFunction | Middleware<any> | Class<any>) {
+      const classMapperMW =
+        "getMWFunction" in provider
+          ? // A class that extends Middleware(SomeAPI)
+            provider.getMWFunction()
+          : provider.prototype &&
+            Object.getPrototypeOf(provider.prototype) !== Object.prototype
+          ? // A class that extends something
+            getClassProvider(provider as Class<any>)
+          : // A plain function (ClassMapperMiddleware):
+            (provider as MWFunction);
+
+      const existingMW = providedMWFunctions.get(instance);
+      const chainedMW: MWFunction = !existingMW
+        ? classMapperMW
+        : (Class, mappedClass, next) =>
+            classMapperMW(Class, mappedClass, (Class, mappedClass) =>
+              existingMW(Class, mappedClass, next)
+            );
+
+      providedMWFunctions.set(instance, chainedMW);
     }
   };
 }
 
 function getClassProvider(ConcreteClass: Class<any>) {
-  // TODO: memoize result?
-  const mw: ClassMapperMiddleware = (Class, next) =>
-    ConcreteClass.prototype instanceof Class ? ConcreteClass : next(Class);
+  const mw: MWFunction = (requestedClass, mappedClass, next) =>
+    next(
+      requestedClass,
+      ConcreteClass.prototype instanceof mappedClass
+        ? ConcreteClass
+        : mappedClass
+    );
   return mw;
 }

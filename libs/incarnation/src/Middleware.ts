@@ -1,34 +1,68 @@
 import { Class } from "./Class";
-import { ClassMapperMiddleware } from "./Context";
+import { MWFunction } from "./Context";
+import { getEffectiveProps } from "./utils/getEffectiveProps";
 
 export type Middleware<T> = Class<T> & {
-  classMapperMW: ClassMapperMiddleware;
+  getMWFunction(): MWFunction;
   middlewareFor: Class<T>;
 };
 
+export const middlewareParent = Symbol();
+
 export function Middleware<T>(Class: Class<T>): Middleware<T> {
-  const MW = (() => class extends (Class as any) {} as Middleware<T>)();
-  MW.middlewareFor = Class;
-  MW.classMapperMW = function(requestedClass, next) {
-    const ConcretedClass = next(requestedClass);
-    if (Class === requestedClass) {
-      // Fall:
-      // 1. Begär Storage, får Storage. MW: Storage.
-      // 2. Begär IDBStorage, for IDBStorage, MW: Storage.
-      // 3. Begär Storage, får IDBStorage, MW: Storage.
-      // 4. Begär Storage, for IDBStorage, MW: IDBStorage.
-      // 5. Begär IDBStorage, får IDBStorageMW2, MW: Storage.
-    }
-    if (this.prototype instanceof ConcretedClass) return MW;
-    if ((ConcretedClass as Middleware<any>).middlewareFor === Class) {
-      const props = Object.getOwnPropertyDescriptors(this.prototype);
-      const ConcreteMW = class extends (ConcretedClass as any) {};
-      for (const [propName, descriptor] of Object.entries(props)) {
-        Object.defineProperty(ConcreteMW.prototype, propName, descriptor);
+  const MW = (() =>
+    class extends (Class as any) {
+      static middlewareFor = Class;
+      static getMWFunction() {
+        const ThisMW = this;
+        const mwFunction: MWFunction = (requestedClass, mappedClass, next) => {
+          const ConcreteClassOrMW = next(requestedClass, mappedClass);
+          const ConcreteClass =
+            (ConcreteClassOrMW as Middleware<any>).middlewareFor ||
+            ConcreteClassOrMW;
+          if (requestedClass === Class || ConcreteClass === Class) {
+            const ConcreteMW = (() =>
+              class extends (ThisMW as any) {
+                static middlewareFor = ConcreteClass;
+                constructor(...args: any[]) {
+                  super(new ConcreteClassOrMW(...args));
+                }
+              })();
+
+            return ConcreteMW;
+          }
+          return ConcreteClassOrMW;
+        };
+        return mwFunction;
       }
-      return ConcreteMW;
-    }
-    return ConcretedClass;
-  };
+      constructor(dynamicSuper: T) {
+        super();
+        // @ts-ignore
+        this[middlewareParent] = dynamicSuper;
+      }
+    } as Middleware<T>)();
+  const props = getEffectiveProps(Class.prototype);
+  for (const [propName, { get, set, value }] of Object.entries(props)) {
+    Object.defineProperty(
+      MW.prototype,
+      propName,
+      get || set || typeof value !== "function"
+        ? {
+            get() {
+              return this[middlewareParent][propName];
+            },
+            set(value) {
+              this[middlewareParent][propName] = value;
+            }
+          }
+        : {
+            value() {
+              const supr = this[middlewareParent];
+              return supr[propName].apply(supr, arguments);
+            }
+          }
+    );
+  }
+
   return MW;
 }
