@@ -6,8 +6,8 @@ import { ProvideTarget } from "./ProvideTarget";
 
 export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
   function run() {
-    const rerunWhenPromiseResolves = (p: Promise<any>) =>
-      p.then(
+    const rerunWhenPromiseResolves = (thenable: PromiseLike<any>) =>
+      thenable.then(
         () => run.apply(this, arguments),
         error =>
           // Allow also async methods to call suspending apis
@@ -42,10 +42,10 @@ export function promisifyIfAdaptive(value: any) {
   return value;
 }
 
-export function promisify<T extends object>(value: T): Promisified<T> {
-  const rv = createProxy(value, origFn =>
+export function promisify<T extends object>(obj: T): Promisified<T> {
+  const rv = createProxy(obj, origFn =>
     promisifyMethodOrGetter(origFn)
   ) as Promisified<T>;
-  rv[ProvideTarget] = value;
+  rv[ProvideTarget] = obj;
   return rv;
 }

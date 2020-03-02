@@ -1,2 +1,2 @@
 export const IsAdaptive = Symbol();
-export type IsAdaptive = { [IsAdaptive]?: true };
+export type IsAdaptive = { [IsAdaptive]?: boolean };

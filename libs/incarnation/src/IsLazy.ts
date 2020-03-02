@@ -1,2 +1,2 @@
 export const IsLazy = Symbol();
-export type IsLazy = { [IsLazy]?: true };
+export type IsLazy = { [IsLazy]?: boolean };
