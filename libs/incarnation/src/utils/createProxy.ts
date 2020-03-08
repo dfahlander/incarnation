@@ -1,12 +1,14 @@
 import { getEffectiveProps } from "./getEffectiveProps";
 
+export type PropProxifier = (
+  fn: (...args: any[]) => any,
+  propName: string,
+  type: "get" | "set" | "val"
+) => (...args: any[]) => any;
+
 export function createProxy<T extends object>(
   instance: T,
-  wrapper: (
-    fn: (...args: any[]) => any,
-    propName: string,
-    type: "get" | "set" | "val"
-  ) => (...args: any[]) => any
+  wrapper: PropProxifier
 ): T {
   //const SubClass = class extends (Class as any) {};
   const fnProps = getEffectiveProps(instance);

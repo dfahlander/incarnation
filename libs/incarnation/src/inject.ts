@@ -6,7 +6,7 @@ import {
   resolveClass
 } from "./Context";
 import { Class } from "./Class";
-import { createProxy } from "./utils/createProxy";
+import { createProxy, PropProxifier } from "./utils/createProxy";
 
 export const providedMWFunctions = new WeakMap<any, MWFunction>();
 
@@ -14,36 +14,16 @@ export const providedMWFunctions = new WeakMap<any, MWFunction>();
 
 export const cachedInnerProxyMaps = new WeakMap<any, WeakMap<any, any>>();
 
-export function inject<T extends object>(Class: Class<T>): T {
-  // WIP: Ändrar till att alltid cacha instanser på kontextet.
-  // Kan det funka generiskt? Utan specialhantering av konstruction mode?
-  let { cachedSingletons } = Context.current;
-  if (!cachedSingletons) {
-    Context.current.cachedSingletons = cachedSingletons = new WeakMap<
-      Class<any>,
-      any
-    >();
-  }
-  let instance = cachedSingletons.get(Class);
-  if (!instance) {
-    // I det falled man gör use() i koden så vore det ok att här utgå från current context.
-    // Ja, det vore fel att göra annat t.o.m.!
-    // Men i fallet att man gör use() för att instanciera en prop, ja då
-    // borde interna this-proxyn avgöra vad proppen ska representera!
-
-    // Alltså: Om !Context.current.constructing, använd current ctx för att skapa instance
-    // och skapa sedan en proxy mot den instansen.
-    // Men: Om Context.current.constructing,
-    instance = new Class(); //runInContext(() => new Class(), Context.generic);
-    cachedSingletons.set(Class, instance);
-  }
-
-  const proxy = createProxy(instance, (fn, propName, type) => {
+export const getPropProxifier = (
+  getMwFunction: () => MWFunction | undefined,
+  Class: Class
+) => {
+  const result: PropProxifier = (fn, propName, type) => {
     return function(...args: any[]) {
       // External call comes in here
       const outerCtx = Context.current;
       // Apply context middlewares to maybe create a derivated context before calling origFn
-      const mwFunction = providedMWFunctions.get(proxy);
+      const mwFunction = getMwFunction();
       const ctx: Context = mwFunction
         ? deriveContext(outerCtx, mwFunction)
         : outerCtx;
@@ -92,6 +72,37 @@ export function inject<T extends object>(Class: Class<T>): T {
             ctx
           );
     };
-  });
+  };
+  return result;
+};
+
+export function inject<T extends object>(Class: Class<T>): T {
+  // WIP: Ändrar till att alltid cacha instanser på kontextet.
+  // Kan det funka generiskt? Utan specialhantering av konstruction mode?
+  let { cachedSingletons } = Context.current;
+  if (!cachedSingletons) {
+    Context.current.cachedSingletons = cachedSingletons = new WeakMap<
+      Class<any>,
+      any
+    >();
+  }
+  let instance = cachedSingletons.get(Class);
+  if (!instance) {
+    // I det falled man gör use() i koden så vore det ok att här utgå från current context.
+    // Ja, det vore fel att göra annat t.o.m.!
+    // Men i fallet att man gör use() för att instanciera en prop, ja då
+    // borde interna this-proxyn avgöra vad proppen ska representera!
+
+    // Alltså: Om !Context.current.constructing, använd current ctx för att skapa instance
+    // och skapa sedan en proxy mot den instansen.
+    // Men: Om Context.current.constructing,
+    instance = new Class(); //runInContext(() => new Class(), Context.generic);
+    cachedSingletons.set(Class, instance);
+  }
+
+  const proxy = createProxy(
+    instance,
+    getPropProxifier(() => providedMWFunctions.get(proxy), Class)
+  );
   return proxy as T;
 }
