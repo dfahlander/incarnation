@@ -1,3 +1,23 @@
+/* Review comments:
+ Seems not to be correct.
+
+ Problem: If we have
+  {
+    getClient1(id): FooClientSuspense
+    getClient2(id): Promise<FooClientSuspense>;
+  }
+ ...we get
+  {
+    getClient1(id): Promise<FooClientPromised> // OK!
+    getClient2(id): Promise<FooClientSuspense>
+  }
+  ... but we should get:
+  {
+    getClient1(id): Promise<FooClientPromised> // OK!
+    getClient2(id): Promise<FooClientPromised>
+  }
+*/
+
 import { IsAdaptive } from "./IsAdaptive";
 import { IsLazy } from "./IsLazy";
 

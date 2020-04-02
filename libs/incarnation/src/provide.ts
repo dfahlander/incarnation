@@ -8,7 +8,9 @@ export function provide(instance: object) {
   while (instance[ProvideTarget]) instance = instance[ProvideTarget];
   return {
     with(provider: MWFunction | Middleware<any> | Class<any>) {
-      const classMapperMW =
+      if (typeof provider !== "function")
+        throw new TypeError(`Given provider must a function or class`);
+      const mwFunction =
         "getMWFunction" in provider
           ? // A class that extends Middleware(SomeAPI)
             provider.getMWFunction()
@@ -19,15 +21,15 @@ export function provide(instance: object) {
           : // A plain function (ClassMapperMiddleware):
             (provider as MWFunction);
 
-      const existingMW = providedMWFunctions.get(instance);
-      const chainedMW: MWFunction = !existingMW
-        ? classMapperMW
+      const existingMWFunction = providedMWFunctions.get(instance);
+      const chainedMWFunction: MWFunction = !existingMWFunction
+        ? mwFunction
         : (Class, mappedClass, next) =>
-            classMapperMW(Class, mappedClass, (Class, mappedClass) =>
-              existingMW(Class, mappedClass, next)
+            mwFunction(Class, mappedClass, (Class, mappedClass) =>
+              existingMWFunction(Class, mappedClass, next)
             );
 
-      providedMWFunctions.set(instance, chainedMW);
+      providedMWFunctions.set(instance, chainedMWFunction);
     }
   };
 }
