@@ -1,4 +1,4 @@
-import { entryPoint } from "../src/entryPoint";
+import { entryPoint, asyncEntryPoint } from "../src/entryPoint";
 import { provide } from "../src/provide";
 import { inject } from "../src/inject";
 
@@ -28,7 +28,7 @@ describe("provide", () => {
   }
 
   it("should be possible to provide an alternate implementation of the service itself when invoked using entryPoint", async () => {
-    const myService = inject(MyService);
+    const myService = entryPoint(MyService);
     provide(myService).with((requestedClass, mappedClass, next) =>
       next(
         requestedClass,
@@ -39,7 +39,7 @@ describe("provide", () => {
   });
 
   it("should prioritize the latest provided implementation", () => {
-    const myService = inject(MyService);
+    const myService = entryPoint(MyService);
     provide(myService).with(MyAlternateService);
     expect(myService.sayHi()).toBe("Ho!");
     provide(myService).with(MyAlternateService2);
@@ -47,7 +47,7 @@ describe("provide", () => {
   });
 
   it("should be possible to provide alternatives for concrete classes", () => {
-    const myService = inject(MyService);
+    const myService = entryPoint(MyService);
     provide(myService).with(MyAlternativeToMyAlternateService);
     provide(myService).with(MyAlternateService);
     expect(myService.sayHi()).toBe("Hohoho!");
@@ -73,7 +73,7 @@ describe("provide", () => {
       }
     }
 
-    const myService = entryPoint(MyService);
+    const myService = asyncEntryPoint(MyService);
     provide(myService).with(AlternateDep);
 
     const resultPromise = myService.sayHi(1);

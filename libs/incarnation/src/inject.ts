@@ -1,97 +1,28 @@
-import {
-  Context,
-  MWFunction,
-  runInContext,
-  deriveContext,
-  resolveClass
-} from "./Context";
+import { Context, MWFunction, deriveContext } from "./Context";
 import { Class } from "./Class";
-import { createProxy } from "./utils/createProxy";
+import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
+import { Middleware } from "./Middleware";
+import { resolveProvider } from "./provide";
 
-export const providedMWFunctions = new WeakMap<any, MWFunction>();
-
-//export const cachedSingletons = new WeakMap<Class, object>();
-
-export const cachedInnerProxyMaps = new WeakMap<any, WeakMap<any, any>>();
-
-export function inject<T extends object>(Class: Class<T>): T {
-  // WIP: Ändrar till att alltid cacha instanser på kontextet.
-  // Kan det funka generiskt? Utan specialhantering av konstruction mode?
-  let { cachedSingletons } = Context.current;
-  if (!cachedSingletons) {
-    Context.current.cachedSingletons = cachedSingletons = new WeakMap<
-      Class<any>,
-      any
-    >();
-  }
-  let instance = cachedSingletons.get(Class);
-  if (!instance) {
-    // I det falled man gör use() i koden så vore det ok att här utgå från current context.
-    // Ja, det vore fel att göra annat t.o.m.!
-    // Men i fallet att man gör use() för att instanciera en prop, ja då
-    // borde interna this-proxyn avgöra vad proppen ska representera!
-
-    // Alltså: Om !Context.current.constructing, använd current ctx för att skapa instance
-    // och skapa sedan en proxy mot den instansen.
-    // Men: Om Context.current.constructing,
-    instance = new Class(); //runInContext(() => new Class(), Context.generic);
-    cachedSingletons.set(Class, instance);
-  }
-
-  const proxy = createProxy(instance, (fn, propName, type) => {
-    return function(...args: any[]) {
-      // External call comes in here
-      const outerCtx = Context.current;
-      // Apply context middlewares to maybe create a derivated context before calling origFn
-      const mwFunction = providedMWFunctions.get(proxy);
-      const ctx: Context = mwFunction
-        ? deriveContext(outerCtx, mwFunction)
-        : outerCtx;
-      // Find implementation class
-      const ConcreteClass = resolveClass(ctx, Class);
-      // Find or create instance
-      let { cachedSingletons } = ctx;
-      if (!cachedSingletons)
-        cachedSingletons = ctx.cachedSingletons = new WeakMap<
-          Class<any>,
-          any
-        >();
-      let instance = cachedSingletons.get(ConcreteClass);
-      if (!instance) {
-        //instance = runInContext(() => new ConcreteClass(), Context.generic);
-        instance = runInContext(() => new ConcreteClass(), ctx);
-        cachedSingletons.set(ConcreteClass, instance);
-      }
-      let innerProxy: any = null;
-      let cachedInnerProxies = cachedInnerProxyMaps.get(instance);
-      if (cachedInnerProxies) {
-        innerProxy = cachedInnerProxies.get(ctx);
-      }
-      if (!innerProxy) {
-        // Not found in cache. Create inner proxy here:
-        innerProxy = createProxy(
-          instance,
-          fn =>
-            function(...args) {
-              return runInContext(fn, ctx, innerProxy, args);
-            }
-        );
-        // ...and cache it bound to instance and innerCtx
-        if (!cachedInnerProxies) {
-          cachedInnerProxies = new WeakMap<any, WeakMap<any, any>>();
-          cachedInnerProxyMaps.set(instance, cachedInnerProxies);
-        }
-        cachedInnerProxies.set(ctx, innerProxy);
-      }
-      return type === "val"
-        ? runInContext(instance[propName], ctx, innerProxy, args)
-        : type === "get"
-        ? runInContext(() => Reflect.get(instance, propName, innerProxy), ctx)
-        : runInContext(
-            value => Reflect.set(instance, propName, value, innerProxy),
-            ctx
-          );
-    };
-  });
-  return proxy as T;
+/** Get or create an instance of given class based on current context.
+ *
+ * @param Class Class to inject. A subclass of given class may be returned depending on current context.
+ * @param context If provided, the current context will be combined with given context before injecting the class.
+ * @example
+ *   inject(FriendService) ==> An instance of FriendService bound to current context.
+ *   inject(FriendService, MyContext({myProp: "myValue"})) ==> An instance of FriendService bound to
+ *     current context married with given context.
+ *   inject(FriendService, Context.combine(MyContext1({myProp: "myValue"}), MyContext2({foo: "bar"})) ==>
+ *     An instance of FriendService bound to current context married with given combined contexts.
+ */
+export function inject<T extends object>(
+  Class: Class<T>,
+  context?: MWFunction | Middleware<any> | Class<any>
+): T {
+  return getOrCreateBoundInstance(
+    context
+      ? deriveContext(Context.current, resolveProvider(context))
+      : Context.current,
+    Class
+  );
 }

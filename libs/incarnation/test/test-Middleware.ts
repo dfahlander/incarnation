@@ -1,6 +1,7 @@
 import { provide } from "../src/provide";
 import { inject } from "../src/inject";
 import { Middleware } from "../src/Middleware";
+import { entryPoint } from "../src/entryPoint";
 
 describe("Middleware", () => {
   class Storage {
@@ -41,14 +42,14 @@ describe("Middleware", () => {
   }
 
   it("should be possible to inject middleware for a certain class", () => {
-    const svc = inject(MyService);
+    const svc = entryPoint(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
     provide(svc).with(MyStorageMiddleware);
     expect(svc.sayHi()).toBe("Hi, value from Storage and MyStorageMiddleware"); // The real test.
   });
 
   it("should invoke middleware in front of Storage when a Storage is requested but specialized storage provided", () => {
-    const svc = inject(MyService);
+    const svc = entryPoint(MyService);
     provide(svc).with(SpecializedStorage);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
     provide(svc).with(MyStorageMiddleware);
@@ -58,7 +59,7 @@ describe("Middleware", () => {
   });
 
   it("should invoke middleware in front of SpecializedStorage when Storage is requested but SpecializedStorage provided", () => {
-    const svc = inject(MyService);
+    const svc = entryPoint(MyService);
     provide(svc).with(SpecializedStorage);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
     provide(svc).with(MySpecializedStorageMiddleware);
@@ -68,7 +69,7 @@ describe("Middleware", () => {
   });
 
   it("should invoke multiple middlewares in front of Storage when Storage is requested", () => {
-    const svc = inject(MyService);
+    const svc = entryPoint(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
     provide(svc).with(MyStorageMiddleware);
     provide(svc).with(My2ndStorageMW);

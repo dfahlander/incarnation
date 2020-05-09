@@ -1,15 +1,14 @@
 import { IsLazy } from "./IsLazy";
 import { IsAdaptive } from "./IsAdaptive";
-import { createProxy } from "./utils/createProxy";
+import { getWrappedProps } from "./utils/getWrappedProps";
 import { Promisified } from "./Promisified";
-import { ProvideTarget } from "./ProvideTarget";
 
 export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
-  function run() {
+  function run(...args: any[]) {
     const rerunWhenPromiseResolves = (thenable: PromiseLike<any>) =>
       thenable.then(
-        () => run.apply(this, arguments),
-        error =>
+        () => run.apply(this, args),
+        (error) =>
           // Allow also async methods to call suspending apis
           error && typeof error.then === "function"
             ? rerunWhenPromiseResolves(error)
@@ -18,14 +17,14 @@ export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
 
     let rv;
     try {
-      rv = fn.apply(this, arguments);
+      rv = fn.apply(this, args);
     } catch (x) {
       if (x && typeof x.then === "function") {
         return rerunWhenPromiseResolves(x);
       }
       throw x;
     }
-    if (rv[IsLazy]) {
+    if (rv && rv[IsLazy]) {
       return promisifyIfAdaptive(rv);
     } else {
       return Promise.resolve(rv).then(promisifyIfAdaptive);
@@ -43,9 +42,8 @@ export function promisifyIfAdaptive(value: any) {
 }
 
 export function promisify<T extends object>(obj: T): Promisified<T> {
-  const rv = createProxy(obj, origFn =>
+  const promisifyingProps = getWrappedProps(obj, (origFn) =>
     promisifyMethodOrGetter(origFn)
-  ) as Promisified<T>;
-  rv[ProvideTarget] = obj;
-  return rv;
+  );
+  return Object.create(obj, promisifyingProps) as Promisified<T>;
 }

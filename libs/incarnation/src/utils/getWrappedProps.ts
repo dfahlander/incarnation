@@ -1,20 +1,19 @@
 import { getEffectiveProps } from "./getEffectiveProps";
 
-export function createProxy<T extends object>(
-  instance: T,
+export function getWrappedProps(
+  instance: any,
   wrapper: (
     fn: (...args: any[]) => any,
     propName: string,
-    type: "get" | "set" | "val"
+    type: "get" | "set" | "value"
   ) => (...args: any[]) => any
-): T {
-  //const SubClass = class extends (Class as any) {};
+): PropertyDescriptorMap {
   const fnProps = getEffectiveProps(instance);
   const externalProps: PropertyDescriptorMap = {};
-  for (const [propName, { get, set, value, ...rest }] of Object.entries(
+  for (const [propName, { get, set, value, enumerable }] of Object.entries(
     fnProps
   )) {
-    const externalProp: PropertyDescriptor = { ...rest };
+    const externalProp: PropertyDescriptor = { enumerable };
     if (get) {
       externalProp.get = wrapper(get, propName, "get");
     }
@@ -23,15 +22,14 @@ export function createProxy<T extends object>(
     }
     if (value) {
       if (typeof value === "function") {
-        externalProp.value = wrapper(value, propName, "val");
+        externalProp.value = wrapper(value, propName, "value");
       } else {
         // Convert value property to getter/setter that operates on the real instance:
         externalProp.get = () => instance[propName];
-        externalProp.set = value => (instance[propName] = value);
+        externalProp.set = (value) => (instance[propName] = value);
       }
     }
     externalProps[propName] = externalProp;
   }
-
-  return Object.create(instance, externalProps);
+  return externalProps;
 }
