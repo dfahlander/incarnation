@@ -3,7 +3,7 @@ import { MWFunction } from "./Context";
 import { getEffectiveProps } from "./utils/getEffectiveProps";
 
 export type Middleware<T> = Class<T> & {
-  getMWFunction(): MWFunction;
+  readonly mwFunction: MWFunction;
   middlewareFor: Class<T>;
 };
 
@@ -13,7 +13,7 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
   const MW = (() =>
     class extends (Class as any) {
       static middlewareFor = Class;
-      static getMWFunction() {
+      static get mwFunction() {
         const ThisMW = this;
         const mwFunction: MWFunction = (requestedClass, mappedClass, next) => {
           const ConcreteClassOrMW = next(requestedClass, mappedClass);
@@ -53,13 +53,13 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
             },
             set(value) {
               this[middlewareParent][propName] = value;
-            }
+            },
           }
         : {
             value() {
               const supr = this[middlewareParent];
               return supr[propName].apply(supr, arguments);
-            }
+            },
           }
     );
   }

@@ -15,6 +15,10 @@ export interface Context {
 }
 
 export interface StaticContext {
+  <T>(def: T): {
+    (val: T): Context; // When used in second arg of inject(). const mySvc = use(MySvc, CurrentUser("arne"));
+    new(): T; // For typings of use(), include() and inject(). const currentUser = inject(CurrentUser);
+  }
   readonly root: Context;
   readonly generic: Context;
   readonly current: Context;
@@ -24,8 +28,6 @@ const defaultMwFunction: MWFunction = (requestedClass, mappedClass, next) => map
 const defaultMwNextFn: MWNextFunction = (requestedClass, mappedClass) => mappedClass;
 
 export const rootContext: Context = {
-  //getImpl: requestedClass => requestedClass,
-  //mwNextFn: (requestedClass, mappedClass) => mappedClass,
   mwFunction: defaultMwFunction,
   children: null,
   cachedSingletons: null
@@ -33,14 +35,31 @@ export const rootContext: Context = {
 
 let current: Context = rootContext;
 
-export const Context: StaticContext = {
-  root: rootContext,
-  generic: { ...rootContext },
-  get current(): Context {
-    return current;
+export const Context = (<T>(def: T) => {
+  //const vals = [];//I was about to store all previous contexts here. Now I'm thinking of a weakmap? how to fix? or subscibeZ
+  return (value: T) => {
+    function CustomContext() {
+      if (typeof this === 'object') {
+        // Constructed by new()
+        // Caller is getOrCreateBoundInstance() from inject().
+        return value;
+      }
+      const mwFunction: MWFunction = function (requestedClass, mappedClass, next) {
+        return next(requestedClass, mappedClass);
+      }
+      return {mwFunction, children: null};
+    }
+    // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
+    // If so, return the cached CustomContext instead
+    return CustomContext as any as {(val: T): Context; new(): T;}
   }
-};
-//Object.freeze(Context); // Don't allow root or generic to be changed.
+}) as unknown as StaticContext;
+
+Object.defineProperties(Context, {
+  root: {value: rootContext, writable: false},
+  generic: {value: {...rootContext}, writable: false},
+  current: {get() { return current }}
+});
 
 export function runWithMWFunction<R>(
   fn: ()=>R,
@@ -73,18 +92,18 @@ export function runInContext<FN extends (...args: any[]) => any>(
 }
 
 export function deriveContext(
-  ctx: Context,
+  parent: Context,
   mwFunction: MWFunction
 ): Context {
-  let result = ctx.children?.get(mwFunction);
+  let result = parent.children?.get(mwFunction);
   if (result) return result;
-  result = mwFunction === ctx.mwFunction ? ctx : {
+  result = mwFunction === parent.mwFunction ? parent : {
     //mwNextFn: (requestedClass, mappedClass) => mwFunction(requestedClass, mappedClass, ctx.mwNextFn),
-    mwFunction: (requestedClass, mappedClass) => mwFunction(requestedClass, mappedClass, (rc, mc) => ctx.mwFunction(rc, mc, defaultMwNextFn)),
+    mwFunction: (requestedClass, mappedClass) => mwFunction(requestedClass, mappedClass, (rc, mc) => parent.mwFunction(rc, mc, defaultMwNextFn)),
     children: null
   };
-  if (!ctx.children) ctx.children = new WeakMap<MWFunction | Context, Context>();
-  ctx.children.set(mwFunction, result);
+  if (!parent.children) parent.children = new WeakMap<MWFunction | Context, Context>();
+  parent.children.set(mwFunction, result);
   return result;
 }
 
@@ -93,6 +112,7 @@ export function resolveClass (ctx: Context, requestedClass: Class): Class {
   let result = classMemo.get(requestedClass);
   if (result) return result;
   result = ctx.mwFunction(requestedClass, requestedClass, (rc, mc)=>mc);
+  classMemo.set(requestedClass, result);
   return result;
 }
 

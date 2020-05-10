@@ -1,4 +1,4 @@
-import { MWFunction, deriveContext } from "./Context";
+import { MWFunction, deriveContext, Context } from "./Context";
 import { Middleware } from "./Middleware";
 import { Class } from "./Class";
 import { BoundContext } from "./symbols/BoundContext";
@@ -26,11 +26,11 @@ export function provide(entryPointObj: object) {
 }
 
 export function resolveProvider(
-  provider: MWFunction | Class<any> | Middleware<any>
+  provider: MWFunction | Class<any> | Middleware<any> | Context
 ) {
-  return "getMWFunction" in provider
-    ? // A class that extends Middleware(SomeAPI)
-      provider.getMWFunction()
+  return "mwFunction" in provider
+    ? // A class that extends Middleware(SomeAPI) or a Context
+      provider.mwFunction
     : provider.prototype &&
       Object.getPrototypeOf(provider.prototype) !== Object.prototype
     ? // A class that extends something

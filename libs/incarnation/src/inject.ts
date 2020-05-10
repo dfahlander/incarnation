@@ -17,12 +17,14 @@ import { resolveProvider } from "./provide";
  */
 export function inject<T extends object>(
   Class: Class<T>,
-  context?: MWFunction | Middleware<any> | Class<any>
-): T {
-  return getOrCreateBoundInstance(
-    context
-      ? deriveContext(Context.current, resolveProvider(context))
-      : Context.current,
-    Class
-  );
+  ...contexts: MWFunction[]
+);
+export function inject<T extends object>(Class: Class<T>): T {
+  let ctx = Context.current;
+  if (arguments.length > 1) {
+    for (let i = 1; i < arguments.length; ++i) {
+      ctx = deriveContext(ctx, arguments[i] as MWFunction);
+    }
+  }
+  return getOrCreateBoundInstance(ctx, Class);
 }
