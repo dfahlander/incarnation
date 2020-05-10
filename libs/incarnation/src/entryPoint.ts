@@ -1,4 +1,4 @@
-import { Class } from "./Class";
+import { Class, AbstractClass } from "./Class";
 import { Promisified } from "./Promisified";
 import { Context } from "./Context";
 import { promisify } from "./promisifier";
@@ -7,7 +7,7 @@ import { BoundContext } from "./symbols/BoundContext";
 import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
 
 export function entryPoint<T extends object>(
-  Class: Class<T>
+  Class: AbstractClass<T>
 ): T & { [BoundContext]: Context } {
   return entryPointInternal(Class);
 }
@@ -21,7 +21,7 @@ export function asyncEntryPoint<T extends object>(
 const nullTarget = {};
 Object.freeze(nullTarget);
 
-function entryPointInternal(Class: Class, asyncify?: boolean) {
+function entryPointInternal(Class: AbstractClass<any>, asyncify?: boolean) {
   if (Context.current !== Context.root)
     throw new Error(
       `entryPoint() can only be used in global context. Use async() or use() instead from context based code`

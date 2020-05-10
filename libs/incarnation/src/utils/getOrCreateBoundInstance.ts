@@ -1,4 +1,4 @@
-import { Class } from "../Class";
+import { Class, AbstractClass } from "../Class";
 import { Context, runInContext, resolveClass, bindToContext } from "../Context";
 import { getWrappedProps } from "./getWrappedProps";
 
@@ -7,10 +7,11 @@ import { getWrappedProps } from "./getWrappedProps";
  * @param ctx Bound context
  * @param Class Class to instanciate. The result can be a subclass of given class depending on context.
  */
-export function getOrCreateBoundInstance(ctx: Context, Class: Class) {
+export function getOrCreateBoundInstance(ctx: Context, Class: AbstractClass) {
   // Find cached singleton
   const cachedSingletons =
-    ctx.cachedSingletons || (ctx.cachedSingletons = new WeakMap<Class, any>());
+    ctx.cachedSingletons ||
+    (ctx.cachedSingletons = new WeakMap<AbstractClass, any>());
   let instance = cachedSingletons.get(Class);
   if (instance) {
     return instance;

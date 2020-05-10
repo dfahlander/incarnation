@@ -1,16 +1,16 @@
-import { Class } from "./Class";
+import { Class, AbstractClass } from "./Class";
 
 //export type ClassMapper = (requestedClass: Class) => Class;
-export type MWNextFunction = (requestedClass: Class, mappedClass: Class) => Class;
-export type MWFunction = (requestedClass: Class, mappedClass: Class, next: MWNextFunction) => Class;
+export type MWNextFunction = (requestedClass: AbstractClass, mappedClass: Class) => Class;
+export type MWFunction = (requestedClass: AbstractClass, mappedClass: Class, next: MWNextFunction) => Class;
 
 export interface Context {
   //readonly getImpl: ClassMapper;
   //readonly mwNextFn: MWNextFunction;
   readonly mwFunction: MWFunction;
   children: null | WeakMap<MWFunction | Context, Context>;
-  classMemo?: null | WeakMap<Class<any>, Class<any>>;
-  cachedSingletons?: null | WeakMap<Class<any>, any>;
+  classMemo?: null | WeakMap<AbstractClass<any>, Class<any>>;
+  cachedSingletons?: null | WeakMap<AbstractClass<any>, any>;
   internalProxies?: null | WeakMap<any, any>;
 }
 
@@ -111,11 +111,11 @@ export function deriveContext(
   return result;
 }
 
-export function resolveClass (ctx: Context, requestedClass: Class): Class {
+export function resolveClass (ctx: Context, requestedClass: AbstractClass): Class {
   const classMemo = ctx.classMemo || (ctx.classMemo = new WeakMap<Class, Class>());
   let result = classMemo.get(requestedClass);
   if (result) return result;
-  result = ctx.mwFunction(requestedClass, requestedClass, (rc, mc)=>mc);
+  result = ctx.mwFunction(requestedClass, requestedClass as Class, (rc, mc)=>mc);
   classMemo.set(requestedClass, result);
   return result;
 }
