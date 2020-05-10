@@ -1,5 +1,5 @@
 import { Class } from "../Class";
-import { Context, runInContext, resolveClass } from "../Context";
+import { Context, runInContext, resolveClass, bindToContext } from "../Context";
 import { getWrappedProps } from "./getWrappedProps";
 
 /** Gets or creates a contextually bound instance for given context and class.
@@ -20,8 +20,8 @@ export function getOrCreateBoundInstance(ctx: Context, Class: Class) {
   // Create instance within context, so that if its constructor calls inject(),
   // it will inject from the correct context.
   instance = runInContext(() => new ConcreteClass(), ctx);
-  const wrappedProps = getWrappedProps(instance, (origFn) => (...args: any[]) =>
-    runInContext(origFn, ctx, instance, args)
+  const wrappedProps = getWrappedProps(instance, (origFn) =>
+    bindToContext(origFn, ctx, instance)
   );
   Object.defineProperties(instance, wrappedProps);
   cachedSingletons.set(Class, instance);

@@ -76,19 +76,23 @@ export function runWithMWFunction<R>(
   }
 }
 
-export function runInContext<FN extends (...args: any[]) => any>(
-  fn: FN,
-  ctx: Context,
-  target: any = null,
-  args: any[] = []
-): ReturnType<FN> {
-  const prevCtx = current;
-  try {
-    current = ctx;
-    return fn.apply(target, args);
-  } finally {
-    current = prevCtx;
+export function bindToContext<FN extends (...args: any[]) => any> (fn: FN, ctx: Context, target: any=null) {
+  return function () {
+    const prevCtx = current;
+    try {
+      current = ctx;
+      return fn.apply(target, arguments);
+    } finally {
+      current = prevCtx;
+    }  
   }
+}
+
+export function runInContext<FN extends () => any>(
+  fn: FN,
+  ctx: Context): ReturnType<FN>
+{
+  return bindToContext(fn, ctx)();
 }
 
 export function deriveContext(

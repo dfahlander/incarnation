@@ -1,6 +1,6 @@
 import { Class } from "./Class";
 import { Promisified } from "./Promisified";
-import { Context, runInContext } from "./Context";
+import { Context } from "./Context";
 import { promisify } from "./promisifier";
 import { getWrappedProps } from "./utils/getWrappedProps";
 import { BoundContext } from "./symbols/BoundContext";
