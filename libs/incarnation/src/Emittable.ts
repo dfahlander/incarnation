@@ -1,6 +1,6 @@
 import { llDelete } from "./utils/ll";
 
-export const enum ResultState {
+export const enum EmittableState {
   NOT_STARTED = 0,
   PENDING = 1,
   SUCCESS = 2,
@@ -13,20 +13,20 @@ interface ResultListenerNode {
   prev: ResultListenerNode;
   notify: NotifyFunction<any>;
   next: ResultListenerNode;
-  result: Result;
+  emittable: Emittable;
 }
 
-export class Result<T = any> {
-  state: ResultState;
+export class Emittable<T = any> {
+  state: EmittableState;
   value: T | null;
   error: any | null;
   lastListener: ResultListenerNode | null = null;
 
-  constructor(state: ResultState, error: any);
+  constructor(state: EmittableState, error: any);
   constructor(value: T);
   constructor() {
     if (arguments.length === 1) {
-      this.state = ResultState.SUCCESS;
+      this.state = EmittableState.SUCCESS;
       this.value = arguments[0];
       this.error = null;
     } else {
@@ -36,20 +36,20 @@ export class Result<T = any> {
     }
   }
 
-  setValue(value: T) {
+  emit(value: T) {
     if (value !== this.value) {
       this.value = value;
       this.error = null;
-      this.state = ResultState.SUCCESS;
+      this.state = EmittableState.SUCCESS;
       this.notify();
     }
   }
 
-  setError(error: any) {
+  emitError(error: any) {
     if (error !== this.error) {
       this.value = null;
       this.error = error;
-      this.state = ResultState.ERROR;
+      this.state = EmittableState.ERROR;
       this.notify();
     }
   }
@@ -65,44 +65,47 @@ export class Result<T = any> {
     error?: (err: any) => void;
     complete?: (val: any) => void;
   }): { unsubscribe: () => void } {
-    const node = Result_listen(this, function () {
-      return this.result.error
-        ? observer.error?.(this.result.error)
-        : observer.next(this.result.value);
+    const node = Emittable_listen(this, function () {
+      return this.emittable.error
+        ? observer.error?.(this.emittable.error)
+        : observer.next(this.emittable.value);
     });
-    return { unsubscribe: () => Result_unlisten(node.result, node) };
+    return { unsubscribe: () => Emittable_unlisten(node.emittable, node) };
   }
 }
 
-export function Result_listen(
-  result: Result,
+export function Emittable_listen(
+  emittable: Emittable,
   notify: NotifyFunction<any>
 ): ResultListenerNode {
-  const { lastListener } = result;
+  const { lastListener } = emittable;
   if (lastListener) {
     const newNode = {
       prev: lastListener,
       next: lastListener.next,
       notify,
-      result,
+      emittable,
     };
     lastListener.next = newNode;
-    result.lastListener = newNode;
+    emittable.lastListener = newNode;
     return newNode;
   } else {
     const newNode = {
       prev: (null as any) as ResultListenerNode,
       next: (null as any) as ResultListenerNode,
       notify,
-      result,
+      emittable,
     };
     newNode.next = newNode.prev = newNode;
-    result.lastListener = newNode;
+    emittable.lastListener = newNode;
     return newNode;
   }
 }
 
-export function Result_unlisten(result: Result, listener: ResultListenerNode) {
+export function Emittable_unlisten(
+  result: Emittable,
+  listener: ResultListenerNode
+) {
   if (!listener || !listener.notify)
     throw new TypeError(`Given listener not valid type`);
   result.lastListener = llDelete(result.lastListener, listener);
