@@ -7,6 +7,8 @@
 
 # Observables
 
-[ ] use()
+[ ] DataStore
 [ ] context.observables
-[ ] Observable class Rx compatible
+[ ] use()
+[ ] QueryReducer
+[ ] MutationMerger
