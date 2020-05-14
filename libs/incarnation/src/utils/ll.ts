@@ -1,4 +1,4 @@
-interface LLNode {
+export interface LLNode {
   prev: LLNode;
   next: LLNode;
 }
@@ -11,7 +11,7 @@ export function llDelete<T extends LLNode>(
   if (prev) prev.next = next;
   if (next) next.prev = prev;
   // @ts-ignore
-  node.prev = node.next = null;
+  node.prev = node.next = null; // Free upp memory early.
   return node === lastNode
     ? prev === next
       ? null
