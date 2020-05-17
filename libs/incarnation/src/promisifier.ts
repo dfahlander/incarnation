@@ -47,3 +47,12 @@ export function promisify<T extends object>(obj: T): Promisified<T> {
   );
   return Object.create(obj, promisifyingProps) as Promisified<T>;
 }
+
+export function promisified<T extends object>(instance: T): Promisified<T> {
+  let promisified = instance["$async"];
+  if (!promisified) {
+    promisified = promisify(instance);
+    instance["$async"] = promisified;
+  }
+  return promisified;
+}

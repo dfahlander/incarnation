@@ -1,5 +1,6 @@
 import { asyncEntryPoint } from "../src/entryPoint";
 import { provide } from "../src/provide";
+import { use } from "../src/use";
 
 describe("DataStore", () => {
   type KeyValueMutation =
@@ -14,8 +15,8 @@ describe("DataStore", () => {
 
   abstract class KeyValueStore extends DataStore<KeyValueMutation> {
     abstract async get(key: any): Promise<any>;
-    async count(): Promise<number>;
-    async mutate(mutations: KeyValueMutation[]): Promise<void>;
+    abstract async count(): Promise<number>;
+    abstract async mutate(mutations: KeyValueMutation[]): Promise<void>;
   }
 
   class MyService {

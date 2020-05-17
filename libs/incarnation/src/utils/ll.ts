@@ -4,7 +4,7 @@ export interface LLNode {
 }
 
 export function llDelete<T extends LLNode>(
-  lastNode: T | null,
+  externalPointer: T | null,
   node: T
 ): T | null {
   const { prev, next } = node;
@@ -12,9 +12,9 @@ export function llDelete<T extends LLNode>(
   if (next) next.prev = prev;
   // @ts-ignore
   node.prev = node.next = null; // Free upp memory early.
-  return node === lastNode
+  return node === externalPointer
     ? prev === next
       ? null
       : (prev as T)
-    : (lastNode as T);
+    : (externalPointer as T);
 }

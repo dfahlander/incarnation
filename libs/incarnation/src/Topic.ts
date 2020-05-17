@@ -1,18 +1,23 @@
 import { llDelete, LLNode } from "./utils/ll";
 
-interface CircularLinkedSubscriber<T = any> extends LLNode {
-  topic: Topic<T>;
-  notify: NotifyFunction<T>;
-  prev: CircularLinkedSubscriber<T>;
-  next: CircularLinkedSubscriber<T>;
+interface CircularLinkedSubscriber extends LLNode {
+  topic: Topic;
+  notify: NotifyFunction;
+  prev: CircularLinkedSubscriber;
+  next: CircularLinkedSubscriber;
 }
 
-export type NotifyFunction<T> = (this: CircularLinkedSubscriber<T>) => void;
+export type NotifyFunction = (this: CircularLinkedSubscriber) => void;
 
-export class Topic<T = any> {
-  lastSubscriber: CircularLinkedSubscriber<T> | null = null;
+export class Topic {
+  private lastSubscriber: CircularLinkedSubscriber | null = null;
+  hasSubscribersChanged: (() => void) | null = null;
 
-  subscribe(notify: NotifyFunction<T>): CircularLinkedSubscriber<T> {
+  get hasSubscribers() {
+    return this.lastSubscriber !== null;
+  }
+
+  subscribe(notify: NotifyFunction): CircularLinkedSubscriber {
     const { lastSubscriber: lastListener } = this;
     if (lastListener) {
       const newNode: CircularLinkedSubscriber = {
@@ -33,14 +38,15 @@ export class Topic<T = any> {
       };
       newNode.next = newNode.prev = newNode;
       this.lastSubscriber = newNode;
+      this.hasSubscribersChanged?.();
       return newNode;
     }
   }
 
   notify() {
-    const { lastSubscriber: lastListener } = this;
-    if (lastListener) {
-      const firstNode = lastListener.next;
+    const { lastSubscriber } = this;
+    if (lastSubscriber) {
+      const firstNode = lastSubscriber.next;
       let node = firstNode;
       do {
         try {
@@ -51,9 +57,12 @@ export class Topic<T = any> {
     }
   }
 
-  unsubscribe(listener: CircularLinkedSubscriber<T>) {
+  unsubscribe(listener: CircularLinkedSubscriber) {
     if (!listener || !listener.notify)
       throw new TypeError(`Given listener not a TopicListener`);
     this.lastSubscriber = llDelete(this.lastSubscriber, listener);
+    if (!this.lastSubscriber && this.hasSubscribersChanged) {
+      this.hasSubscribersChanged();
+    }
   }
 }

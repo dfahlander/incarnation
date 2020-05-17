@@ -9,7 +9,7 @@ const getOwnPropNames = Object.getOwnPropertyNames;
 
 const equalsByProto = {
   "Intl.Collator": (a: Intl.Collator, b: Intl.Collator) => {
-    return deepEquals(a.resolvedOptions(), b.resolvedOptions());
+    return deepEqualsImmutable(a.resolvedOptions(), b.resolvedOptions());
   },
 };
 
@@ -79,7 +79,7 @@ const equalsByType = {
     if (!deepArrayEquals(props, getOwnPropNames(b))) return false;
     for (let i = 0, l = props.length; i < l; ++i) {
       const propName = props[i];
-      if (!deepEquals(a[propName], b[propName])) return false;
+      if (!deepEqualsImmutable(a[propName], b[propName])) return false;
     }
     return true;
   },
@@ -116,7 +116,7 @@ const typeCompareMap = {
 export function propsEquals<T>(a: T, b: T, ...props: Array<keyof T>) {
   for (let i = 0, l = props.length; i < l; ++i) {
     const propName = props[i];
-    if (!deepEquals(a[propName], b[propName])) return false;
+    if (!deepEqualsImmutable(a[propName], b[propName])) return false;
   }
   return true;
 }
@@ -138,7 +138,7 @@ export function deepArrayEquals(a: any[], b: any[]) {
   const l = a.length;
   if (l !== b.length) return false;
   for (let i = 0; i < l; ++i) {
-    if (!deepEquals(a[i], b[i])) return false;
+    if (!deepEqualsImmutable(a[i], b[i])) return false;
   }
   return true;
 }
@@ -151,7 +151,7 @@ function nonNullNonArrayObjectEquals(a: any, b: any) {
   return specificEquals(a, b);
 }
 
-export function deepEquals(a: any, b: any) {
+export function deepEqualsImmutable(a: any, b: any) {
   if (a === b) return true;
   const type = typeof a;
   if (type !== typeof b) return false;

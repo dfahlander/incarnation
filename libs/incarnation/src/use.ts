@@ -2,33 +2,70 @@ import { getWrappedProps } from "./utils/getWrappedProps";
 import { IsAdaptive } from "./IsAdaptive";
 import { Suspendified } from "./Suspendified";
 import { Topic } from "./Topic";
-import { LLNode } from "./utils/ll";
-import { deepEquals } from "./utils/deepEquals";
+import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
+import { llDelete } from "./utils/ll";
+import { CurrentExecution } from "./CurrentExecution";
+import { MWFunction, Context } from "./Context";
+import { AbstractClass } from "./Class";
+import { inject } from "./inject";
 
-const enum Status {
+const enum ActiveQueryStatus {
   PENDING = 1,
   SUCCESS = 2,
   ERROR = 3,
 }
 
-class CircularLinkedQuery<TArgs extends any[] = any[], TResult = any>
-  implements LLNode {
+export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
+  fn: (...args: TArgs) => Promise<TResult>;
+  instance: any;
   args: TArgs;
-  status: Status;
-  loading: boolean;
-  result: TResult;
+  isLoading: boolean;
+  hasResult: boolean;
+  result: TResult | null;
+  promise: Promise<TResult> | null;
+  error: any;
   topic: Topic;
-  next: CircularLinkedQuery<TArgs, TResult>;
-  prev: CircularLinkedQuery<TArgs, TResult>;
+  next: ActiveQuery<TArgs, TResult>;
+  prev: ActiveQuery<TArgs, TResult>;
 
-  constructor(args: TArgs, result: TResult) {
+  constructor(
+    instance: any,
+    fn: (...args: TArgs) => Promise<TResult>,
+    args: TArgs,
+    promise: Promise<TResult>
+  ) {
+    this.instance = instance;
+    this.fn = fn;
     this.args = args;
-    this.status = Status.PENDING;
-    this.loading = true;
-    this.result = result;
+    this.hasResult = false;
+    this.isLoading = true;
+    this.result = null;
+    this.promise = promise;
+    this.error = null;
     this.topic = new Topic();
     this.next = this;
     this.prev = this;
+  }
+
+  refresh() {
+    if (!this.isLoading && this.topic.hasSubscribers) {
+      this.isLoading = true;
+      this.topic.notify();
+      Promise.resolve(this.fn.apply(this.instance, this.args)).then(
+        (result) => {
+          this.hasResult = true;
+          this.result = result;
+          this.error = null;
+          this.isLoading = false;
+          this.topic.notify();
+        },
+        (error) => {
+          this.error = error;
+          this.isLoading = false;
+          this.topic.notify();
+        }
+      );
+    }
   }
 }
 
@@ -37,7 +74,7 @@ export class ActiveQueries<
   TArgs extends any[] = any,
   TResult = any
 > {
-  firstQuery: CircularLinkedQuery | null = null;
+  firstQuery: ActiveQuery | null = null;
 
   *[Symbol.iterator]() {
     // @ts-ignore
@@ -50,14 +87,38 @@ export class ActiveQueries<
       } while (node !== firstQuery);
     }
   }
+
+  startManagingCleanup(query: ActiveQuery) {
+    if (query.topic.hasSubscribersChanged !== null)
+      throw new TypeError( // Todo: Replace with an InternalError and a code. Or an assert function.
+        `startManagingCleanup() has already been called for this query.`
+      );
+    let timer: any;
+    const cleanup = () => {
+      if (!query.topic.hasSubscribers) {
+        this.firstQuery = llDelete(this.firstQuery, query);
+        // @ts-ignore
+        query.next = query.prev = null; // Free up mem faster?
+      }
+    };
+    const scheduleOrStopCleanup = () => {
+      if (query.topic.hasSubscribers) {
+        timer && clearTimeout(timer);
+      } else {
+        timer = setTimeout(cleanup, 100);
+      }
+    };
+    query.topic.hasSubscribersChanged = scheduleOrStopCleanup;
+    scheduleOrStopCleanup();
+  }
 }
 
 function findQuery(
-  query: CircularLinkedQuery,
+  query: ActiveQuery,
   args: any[],
-  stop: CircularLinkedQuery
-): CircularLinkedQuery | null {
-  if (deepEquals(args, query.args)) return query;
+  stop: ActiveQuery
+): ActiveQuery | null {
+  if (deepEqualsImmutable(args, query.args)) return query;
   if (query === stop) return null;
   return findQuery(query.next, args, stop);
 }
@@ -78,35 +139,49 @@ function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
 
     const query = firstQuery && findQuery(firstQuery, args, firstQuery.prev);
     if (query) {
-      const { status, result } = query;
-      if (status === Status.SUCCESS) return result;
-      throw result; // Promise or error depending on status. In both cases we should throw it!
+      if (CurrentExecution.current) {
+        CurrentExecution.current.queries.push(query);
+      }
+      const { hasResult, result } = query;
+      // If we've ever got a result, return it here:
+      if (hasResult) return result; // This holds true also if a refresh is happening, or if a refresh resulted in an error.
+      if (query.promise) throw query.promise;
+      throw query.error;
     }
     // Not cached. Call method to get it:
-    let result = fn.apply(this, args);
-    if (!result || typeof result.then !== "function") {
+    let promise = fn.apply(this, args);
+    if (!promise || typeof promise.then !== "function") {
       // If the method, getter or setter ever returns a non-promise,
       // assume it will never in the future return a promise.
       // Stop intercepting.
       bypass = true;
-      return result;
+      return promise;
     }
 
     // Handle returned promise
-    result = Promise.resolve(result).then(
-      (result: any) => {
-        newQuery.result = result;
-        newQuery.status = Status.SUCCESS;
-        newQuery.loading = false;
-      },
-      (error: any) => {
-        newQuery.result = error;
-        newQuery.status = Status.ERROR;
-        newQuery.loading = false;
-      }
-    );
+    promise = Promise.resolve(promise)
+      .then(
+        (result: any) => {
+          newQuery.result = result;
+          newQuery.promise = null;
+          newQuery.error = null;
+          newQuery.isLoading = false;
+          // No need to notify(). When this promise resolves, the system will call us again and get the cached value.
+          return result;
+        },
+        (error: any) => {
+          newQuery.promise = null;
+          newQuery.error = error;
+          newQuery.isLoading = false;
+          return Promise.reject(error);
+        }
+      )
+      .finally(() => {
+        // Schedule a cleanup in case no one subscribes to the query.
+        queries.startManagingCleanup(newQuery);
+      });
 
-    const newQuery = new CircularLinkedQuery(args, result);
+    const newQuery = new ActiveQuery(this, fn, args, promise);
 
     if (firstQuery) {
       newQuery.prev = firstQuery.prev; // Connect new node to last node
@@ -116,7 +191,7 @@ function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
       // Circular linked list is empty. Create first node:
       queries.firstQuery = newQuery;
     }
-    throw result; // Suspend
+    throw promise; // Suspend
   }
   return run;
 }
@@ -133,4 +208,26 @@ function suspendify<T extends object>(obj: T): Suspendified<T> {
     suspendifyMethodOrGetter(origFn)
   );
   return Object.create(obj, promisifyingProps) as Suspendified<T>;
+}
+
+export function use<T extends object>(
+  Class: AbstractClass<T>,
+  ...contexts: MWFunction[]
+): Suspendified<T>;
+export function use<T extends object>(
+  Class: AbstractClass<T>
+): Suspendified<T> {
+  if (Context.current === Context.root)
+    throw new Error(
+      `use() can only be used within a context. Use entryPoint() instead in global context.`
+    );
+
+  const instance =
+    arguments.length > 1 ? inject.apply(this, arguments) : inject(Class);
+  let suspendified = instance["$use"];
+  if (!suspendified) {
+    suspendified = suspendify(instance);
+    instance["$use"] = suspendified;
+  }
+  return suspendified;
 }

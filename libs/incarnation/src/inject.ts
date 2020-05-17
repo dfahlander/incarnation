@@ -1,5 +1,5 @@
 import { Context, MWFunction, deriveContext } from "./Context";
-import { Class } from "./Class";
+import { Class, AbstractClass } from "./Class";
 import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
 import { Middleware } from "./Middleware";
 import { resolveProvider } from "./provide";
@@ -16,10 +16,10 @@ import { resolveProvider } from "./provide";
  *     An instance of FriendService bound to current context married with given combined contexts.
  */
 export function inject<T extends object>(
-  Class: Class<T>,
+  Class: AbstractClass<T>,
   ...contexts: MWFunction[]
 );
-export function inject<T extends object>(Class: Class<T>): T {
+export function inject<T extends object>(Class: AbstractClass<T>): T {
   let ctx = Context.current;
   if (arguments.length > 1) {
     for (let i = 1; i < arguments.length; ++i) {

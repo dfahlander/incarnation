@@ -1,7 +1,8 @@
 import { Topic } from "./Topic";
+import { ActiveQuery } from "./use";
 
 export interface Execution {
-  emittables: Topic[];
+  queries: ActiveQuery[];
 }
 
 export const _CurrentExecution = {
@@ -15,3 +16,6 @@ if (!globalThis._incarnationExecution) {
 }
 
 export const CurrentExecution = globalThis._incarnationExecution as CurrentExecution;
+
+// TODO:
+// 1.
