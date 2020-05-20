@@ -1,14 +1,17 @@
 import { getEffectiveProps } from "./getEffectiveProps";
 
+const nil = Object.create(null);
+
 export function getWrappedProps(
-  instance: any,
+  instanceOrProto: any,
   wrapper: (
     fn: (...args: any[]) => any,
     propName: string,
     type: "get" | "set" | "value"
-  ) => (...args: any[]) => any
+  ) => (...args: any[]) => any,
+  wrapPlainValues: boolean
 ): PropertyDescriptorMap {
-  const fnProps = getEffectiveProps(instance);
+  const fnProps = getEffectiveProps(instanceOrProto);
   const externalProps: PropertyDescriptorMap = {};
   for (const [propName, { get, set, value, enumerable }] of Object.entries(
     fnProps
@@ -23,10 +26,25 @@ export function getWrappedProps(
     if (value) {
       if (typeof value === "function") {
         externalProp.value = wrapper(value, propName, "value");
-      } else {
+      } else if (wrapPlainValues) {
         // Convert value property to getter/setter that operates on the real instance:
-        externalProp.get = () => instance[propName];
-        externalProp.set = (value) => (instance[propName] = value);
+        // I know this feels wierd if instanceOrProto is a prototype,
+        // but class prototypes never have.
+        // Wrapping get of value prop is important
+        // to convert Adaptive objects to requested flavor
+        externalProp.get = wrapper(
+          () => instanceOrProto[propName],
+          propName,
+          "get"
+        );
+        // Wrapping the setter is for completeness. Don't see a use case
+        // other than possible rewriting an Adaptive object back to its
+        // orignal value.
+        externalProp.set = wrapper(
+          (value) => (instanceOrProto[propName] = value),
+          propName,
+          "set"
+        );
       }
     }
     externalProps[propName] = externalProp;

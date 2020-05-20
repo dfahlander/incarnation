@@ -1,4 +1,5 @@
 import { Class, AbstractClass } from "./Class";
+import { getWrappedProps } from "./utils/getWrappedProps";
 
 //export type ClassMapper = (requestedClass: Class) => Class;
 export type MWNextFunction = (
@@ -105,11 +106,48 @@ export function bindToContext<FN extends (...args: any[]) => any>(
   };
 }
 
+export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
+  // @ts-ignore
+  const rv = class extends Class {
+    constructor(...args: any[]) {
+      const parentCtx = current;
+      try {
+        current = ctx;
+        super(...args);
+      } finally {
+        current = parentCtx;
+      }
+    }
+  } as Class<T>;
+  const wrappedProps = getWrappedProps(
+    Class.prototype,
+    (parentFn) =>
+      function () {
+        const prevCtx = current;
+        try {
+          current = ctx;
+          return parentFn.apply(this, arguments);
+        } finally {
+          current = prevCtx;
+        }
+      },
+    false
+  );
+  Object.defineProperties(rv.prototype, wrappedProps);
+  return rv;
+}
+
 export function runInContext<FN extends () => any>(
   fn: FN,
   ctx: Context
 ): ReturnType<FN> {
-  return bindToContext(fn, ctx)();
+  const prevCtx = current;
+  try {
+    current = ctx;
+    return fn();
+  } finally {
+    current = prevCtx;
+  }
 }
 
 export function deriveContext(

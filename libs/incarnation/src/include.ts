@@ -1,6 +1,6 @@
 import { Class, AbstractClass } from "./Class";
 import { Promisified } from "./Promisified";
-import { promisified } from "./promisifier";
+import { promisify } from "./promisifier";
 import { Context, MWFunction } from "./Context";
 import { inject } from "./inject";
 
@@ -17,5 +17,5 @@ export function include<T extends object>(
     );
   const instance =
     arguments.length > 1 ? inject.apply(this, arguments) : inject(Class);
-  return promisified(instance);
+  return promisify(instance);
 }

@@ -59,8 +59,9 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
     },
     set(_, propName, value, receiver) {
       const supr = superInstances.get(receiver);
-      if (supr!) return false;
-      return Reflect.set(supr, propName, value, supr);
+      if (!supr) return false;
+      supr[propName] = value;
+      return true;
     },
   });
   return MW as any;

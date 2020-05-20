@@ -35,24 +35,22 @@ export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
 }
 
 export function promisifyIfAdaptive(value: any) {
-  if (value && value[IsAdaptive]) {
+  if (value && value.$flavors) {
     return promisify(value);
   }
   return value;
 }
 
-export function promisify<T extends object>(obj: T): Promisified<T> {
-  const promisifyingProps = getWrappedProps(obj, (origFn) =>
-    promisifyMethodOrGetter(origFn)
-  );
-  return Object.create(obj, promisifyingProps) as Promisified<T>;
-}
-
-export function promisified<T extends object>(instance: T): Promisified<T> {
-  let promisified = instance["$async"];
+export function promisify<T extends IsAdaptive>(obj: T): Promisified<T> {
+  let promisified = obj.$flavors.promise as Promisified<T> | undefined;
   if (!promisified) {
-    promisified = promisify(instance);
-    instance["$async"] = promisified;
+    const promisifyingProps = getWrappedProps(
+      obj,
+      (origFn) => promisifyMethodOrGetter(origFn),
+      true
+    );
+    promisified = Object.create(obj, promisifyingProps) as Promisified<T>;
+    obj.$flavors.promise = promisified;
   }
   return promisified;
 }

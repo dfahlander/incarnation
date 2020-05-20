@@ -130,7 +130,7 @@ function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
     ActiveQueries<any, any, any>
   >());
   function run(...args: any[]) {
-    if (bypass) return fn.apply(this, args);
+    if (bypass) return suspendifyIfAdaptive(fn.apply(this, args));
     const queries: ActiveQueries =
       activeQueries.get(this) ||
       activeQueries.set(this, new ActiveQueries()).get(this)!;
@@ -144,7 +144,8 @@ function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
       }
       const { hasResult, result } = query;
       // If we've ever got a result, return it here:
-      if (hasResult) return result; // This holds true also if a refresh is happening, or if a refresh resulted in an error.
+      // This holds true also if a refresh is happening, or if a refresh resulted in an error.
+      if (hasResult) return suspendifyIfAdaptive(result);
       if (query.promise) throw query.promise;
       throw query.error;
     }
@@ -197,17 +198,23 @@ function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
 }
 
 function suspendifyIfAdaptive(value: any) {
-  if (value && value[IsAdaptive]) {
+  if (value && value.$flavors) {
     return suspendify(value);
   }
   return value;
 }
 
-function suspendify<T extends object>(obj: T): Suspendified<T> {
-  const promisifyingProps = getWrappedProps(obj, (origFn) =>
-    suspendifyMethodOrGetter(origFn)
-  );
-  return Object.create(obj, promisifyingProps) as Suspendified<T>;
+function suspendify<T extends IsAdaptive>(obj: T): Suspendified<T> {
+  let suspendified = obj.$flavors.suspense as Suspendified<T> | undefined;
+  if (!suspendified) {
+    const suspendifyingProps = getWrappedProps(
+      obj,
+      (origFn) => suspendifyMethodOrGetter(origFn),
+      true
+    );
+    suspendified = Object.create(obj, suspendifyingProps) as Suspendified<T>;
+  }
+  return suspendified;
 }
 
 export function use<T extends object>(
@@ -224,10 +231,5 @@ export function use<T extends object>(
 
   const instance =
     arguments.length > 1 ? inject.apply(this, arguments) : inject(Class);
-  let suspendified = instance["$use"];
-  if (!suspendified) {
-    suspendified = suspendify(instance);
-    instance["$use"] = suspendified;
-  }
-  return suspendified;
+  return suspendify(instance);
 }

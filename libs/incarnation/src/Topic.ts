@@ -1,6 +1,6 @@
 import { llDelete, LLNode } from "./utils/ll";
 
-interface CircularLinkedSubscriber extends LLNode {
+export interface CircularLinkedSubscriber extends LLNode {
   topic: Topic;
   notify: NotifyFunction;
   prev: CircularLinkedSubscriber;
@@ -42,6 +42,14 @@ export class Topic {
       return newNode;
     }
   }
+
+  /*once(notify: NotifyFunction): CircularLinkedSubscriber {
+    const topic = this;
+    return topic.subscribe(function () {
+      topic.unsubscribe(this);
+      notify.apply(this);
+    });
+  }*/
 
   notify() {
     const { lastSubscriber } = this;

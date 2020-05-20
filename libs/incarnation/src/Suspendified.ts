@@ -3,8 +3,8 @@ import { IsAdaptive } from "./IsAdaptive";
 export type SuspendifiedMethodOrGetter<T> = T extends (
   ...args: infer TArgs
 ) => infer R // It's a method!
-  ? R extends Promise<any> // Return value is a promise
-    ? (...args: TArgs) => Suspendified<R>
+  ? R extends Promise<infer P> // Return value is a promise
+    ? (...args: TArgs) => SuspendifiedIfAdaptive<P>
     : (...args: TArgs) => SuspendifiedIfAdaptive<R>
   : SuspendifiedIfAdaptive<T>;
 

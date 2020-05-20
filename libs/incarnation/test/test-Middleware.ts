@@ -29,6 +29,16 @@ describe("Middleware", () => {
     }
   }
 
+  /*
+  
+  const MyStorageMiddleware = Middleware(Storage, (next) => ({
+    load() {
+      return next.load() + " and MyStorageMiddleware";
+    },
+  }));
+
+  */
+
   class My2ndStorageMW extends Middleware(Storage) {
     load() {
       return super.load() + " and My2ndStorageMW";
