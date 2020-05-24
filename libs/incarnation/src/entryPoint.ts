@@ -63,7 +63,7 @@ function entryPointInternal(Class: AbstractClass<any>, asyncify?: boolean) {
     if (!physicalInstance) {
       const instance = getOrCreateBoundInstance(boundCtx, Class);
       if (asyncify) {
-        let asyncified = instance["$async"];
+        let asyncified = instance["$async"]; // TODO: Don't cache here. Already cached by promisify()!
         if (!asyncified) {
           asyncified = promisify(instance);
           instance["$async"] = asyncified;

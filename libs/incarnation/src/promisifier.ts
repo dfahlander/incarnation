@@ -24,7 +24,7 @@ export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
       }
       throw x;
     }
-    if (rv && rv[IsLazy]) {
+    if (rv && (rv[IsLazy] || rv.$flavors)) {
       return promisifyIfAdaptive(rv);
     } else {
       return Promise.resolve(rv).then(promisifyIfAdaptive);

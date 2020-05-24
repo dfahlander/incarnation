@@ -3,6 +3,7 @@ import { Promisified } from "./Promisified";
 import { promisify } from "./promisifier";
 import { Context, MWFunction } from "./Context";
 import { inject } from "./inject";
+import { IsAdaptive } from "./IsAdaptive";
 
 export function include<T extends object>(
   Class: AbstractClass<T>,
@@ -17,5 +18,5 @@ export function include<T extends object>(
     );
   const instance =
     arguments.length > 1 ? inject.apply(this, arguments) : inject(Class);
-  return promisify(instance);
+  return promisify(instance as T & IsAdaptive);
 }

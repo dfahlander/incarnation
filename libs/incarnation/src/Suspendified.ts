@@ -1,4 +1,6 @@
 import { IsAdaptive } from "./IsAdaptive";
+import { Orig } from "./Orig";
+import { Promisified } from "./Promisified";
 
 export type SuspendifiedMethodOrGetter<T> = T extends (
   ...args: infer TArgs
@@ -16,4 +18,9 @@ export type SuspendifiedIfAdaptive<T> = T extends IsAdaptive
 
 export type Suspendified<T> = {
   [M in keyof T]: SuspendifiedMethodOrGetter<T[M]>;
+} & {
+  $flavors: {
+    orig: Orig<T>;
+    promise: Promisified<T>;
+  };
 };

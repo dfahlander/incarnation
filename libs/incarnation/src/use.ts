@@ -231,5 +231,5 @@ export function use<T extends object>(
 
   const instance =
     arguments.length > 1 ? inject.apply(this, arguments) : inject(Class);
-  return suspendify(instance);
+  return suspendify(instance as T & IsAdaptive);
 }

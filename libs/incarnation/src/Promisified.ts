@@ -4,6 +4,8 @@
 
 import { IsAdaptive } from "./IsAdaptive";
 import { IsLazy } from "./IsLazy";
+import { Orig } from "./Orig";
+import { Suspendified } from "./Suspendified";
 
 export type PromisifiedMethodOrGetter<T> = T extends (
   ...args: infer TArgs
@@ -23,4 +25,9 @@ export type PromisifiedIfAdaptive<T> = T extends IsAdaptive
 
 export type Promisified<T> = {
   [M in keyof T]: PromisifiedMethodOrGetter<T[M]>;
+} & {
+  $flavors: {
+    orig: Orig<T>;
+    suspense: Suspendified<T>;
+  };
 };
