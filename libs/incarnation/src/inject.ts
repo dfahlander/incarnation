@@ -2,7 +2,7 @@ import { Context, MWFunction, deriveContext } from "./Context";
 import { Class, AbstractClass } from "./Class";
 import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
 import { Middleware } from "./Middleware";
-import { resolveProvider } from "./provide";
+import { Provider, resolveProvider } from "./Provider";
 
 /** Get or create an instance of given class based on current context.
  *
@@ -17,13 +17,13 @@ import { resolveProvider } from "./provide";
  */
 export function inject<T extends object>(
   Class: AbstractClass<T>,
-  ...contexts: MWFunction[]
-);
+  ...providers: Provider[]
+): T extends new () => infer I ? I : T;
 export function inject<T extends object>(Class: AbstractClass<T>): T {
   let ctx = Context.current;
   if (arguments.length > 1) {
     for (let i = 1; i < arguments.length; ++i) {
-      ctx = deriveContext(ctx, arguments[i] as MWFunction);
+      ctx = deriveContext(ctx, resolveProvider(arguments[i] as Provider));
     }
   }
   return getOrCreateBoundInstance(ctx, Class);

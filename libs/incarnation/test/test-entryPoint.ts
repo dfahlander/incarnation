@@ -1,4 +1,4 @@
-import { entryPoint, asyncEntryPoint } from "../src/entryPoint";
+import { entryPoint, asyncEntryPoint } from "../src/to-remove/entryPoint";
 import { include } from "../src/include";
 import { run } from "../src/run";
 import { use } from "../src/use";

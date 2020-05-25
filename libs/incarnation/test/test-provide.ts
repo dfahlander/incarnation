@@ -1,5 +1,5 @@
-import { entryPoint, asyncEntryPoint } from "../src/entryPoint";
-import { provide } from "../src/provide";
+import { entryPoint, asyncEntryPoint } from "../src/to-remove/entryPoint";
+import { provide } from "../src/to-remove/provide";
 import { inject } from "../src/inject";
 
 describe("provide", () => {

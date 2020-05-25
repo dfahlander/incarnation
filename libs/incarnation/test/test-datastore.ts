@@ -1,5 +1,5 @@
-import { asyncEntryPoint } from "../src/entryPoint";
-import { provide } from "../src/provide";
+import { asyncEntryPoint } from "../src/to-remove/entryPoint";
+import { provide } from "../src/to-remove/provide";
 import { use } from "../src/use";
 
 describe("DataStore", () => {

@@ -1,7 +1,7 @@
-import { provide } from "../src/provide";
+import { provide } from "../src/to-remove/provide";
 import { inject } from "../src/inject";
 import { Middleware, AbstractMiddleware } from "../src/Middleware";
-import { entryPoint } from "../src/entryPoint";
+import { entryPoint } from "../src/to-remove/entryPoint";
 
 describe("AbstractMiddleware", () => {
   abstract class Storage {

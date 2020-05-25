@@ -8,6 +8,7 @@ import { CurrentExecution } from "./CurrentExecution";
 import { MWFunction, Context } from "./Context";
 import { AbstractClass } from "./Class";
 import { inject } from "./inject";
+import { Provider } from "./Provider";
 
 const enum ActiveQueryStatus {
   PENDING = 1,
@@ -219,17 +220,8 @@ function suspendify<T extends IsAdaptive>(obj: T): Suspendified<T> {
 
 export function use<T extends object>(
   Class: AbstractClass<T>,
-  ...contexts: MWFunction[]
+  ...providers: Provider[]
 ): Suspendified<T>;
-export function use<T extends object>(
-  Class: AbstractClass<T>
-): Suspendified<T> {
-  if (Context.current === Context.root)
-    throw new Error(
-      `use() can only be used within a context. Use entryPoint() instead in global context.`
-    );
-
-  const instance =
-    arguments.length > 1 ? inject.apply(this, arguments) : inject(Class);
-  return suspendify(instance as T & IsAdaptive);
+export function use<T extends object>(): Suspendified<T> {
+  return suspendify(inject.apply(this, arguments) as T & IsAdaptive);
 }

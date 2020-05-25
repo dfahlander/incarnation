@@ -1,7 +1,7 @@
-import { MWFunction, deriveContext, Context } from "./Context";
-import { Middleware } from "./Middleware";
-import { Class } from "./Class";
-import { BoundContext } from "./symbols/BoundContext";
+import { MWFunction, deriveContext, Context } from "../Context";
+import { Middleware } from "../Middleware";
+import { Class } from "../Class";
+import { BoundContext } from "../symbols/BoundContext";
 
 export function provide(entryPointObj: object) {
   if (!(BoundContext in entryPointObj)) {

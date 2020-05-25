@@ -1,10 +1,10 @@
-import { Class, AbstractClass } from "./Class";
-import { Promisified } from "./Promisified";
-import { Context } from "./Context";
-import { promisify } from "./promisifier";
-import { getWrappedProps } from "./utils/getWrappedProps";
-import { BoundContext } from "./symbols/BoundContext";
-import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
+import { Class, AbstractClass } from "../Class";
+import { Promisified } from "../Promisified";
+import { Context } from "../Context";
+import { promisify } from "../promisifier";
+import { getWrappedProps } from "../utils/getWrappedProps";
+import { BoundContext } from "../symbols/BoundContext";
+import { getOrCreateBoundInstance } from "../utils/getOrCreateBoundInstance";
 
 export function entryPoint<T extends object>(
   Class: AbstractClass<T>
