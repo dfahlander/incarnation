@@ -1,7 +1,6 @@
-import { provide } from "../src/to-remove/provide";
 import { inject } from "../src/inject";
 import { Middleware } from "../src/Middleware";
-import { entryPoint } from "../src/to-remove/entryPoint";
+import { Environment } from "../src/Environment";
 
 describe("Middleware", () => {
   class Storage {
@@ -52,45 +51,54 @@ describe("Middleware", () => {
   }
 
   it("should be possible to inject middleware for a certain class", () => {
-    const svc = entryPoint(MyService);
+    let svc = inject(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
-    provide(svc).with(MyStorageMiddleware);
+    svc = inject(MyService, MyStorageMiddleware);
     expect(svc.sayHi()).toBe("Hi, value from Storage and MyStorageMiddleware"); // The real test.
   });
 
   it("should invoke middleware in front of Storage when a Storage is requested but specialized storage provided", () => {
-    const svc = entryPoint(MyService);
-    provide(svc).with(SpecializedStorage);
+    const env = new Environment();
+    env.addProvider(SpecializedStorage);
+    let svc = inject(MyService, env);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
-    provide(svc).with(MyStorageMiddleware);
+    env.addProvider(MyStorageMiddleware);
+    svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MyStorageMiddleware"
     ); // The real test.
   });
 
   it("should invoke middleware in front of SpecializedStorage when Storage is requested but SpecializedStorage provided", () => {
-    const svc = entryPoint(MyService);
-    provide(svc).with(SpecializedStorage);
+    const env = new Environment();
+    let svc = inject(MyService);
+    env.addProvider(SpecializedStorage);
+    svc = inject(MyService, env);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
-    provide(svc).with(MySpecializedStorageMiddleware);
+    env.addProvider(MySpecializedStorageMiddleware);
+    svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MySpecializedStorageMiddleware"
     ); // The real test.
   });
 
   it("should invoke multiple middlewares in front of Storage when Storage is requested", () => {
-    const svc = entryPoint(MyService);
+    let svc = inject(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
-    provide(svc).with(MyStorageMiddleware);
-    provide(svc).with(My2ndStorageMW);
+    const env = new Environment();
+    env.addProvider(MyStorageMiddleware);
+    env.addProvider(My2ndStorageMW);
+    svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from Storage and MyStorageMiddleware and My2ndStorageMW"
     ); // The real test.
-    provide(svc).with(MySpecializedStorageMiddleware); // Won't be invoked until SpecialStorage is provided.
+    env.addProvider(MySpecializedStorageMiddleware); // Won't be invoked until SpecialStorage is provided.
+    svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from Storage and MyStorageMiddleware and My2ndStorageMW"
     ); // Still same result as SpecialStorage wasn't used.
-    provide(svc).with(SpecializedStorage);
+    env.addProvider(SpecializedStorage);
+    svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MyStorageMiddleware and My2ndStorageMW and MySpecializedStorageMiddleware"
     ); // The real test.

@@ -1,6 +1,7 @@
 import { Class, AbstractClass } from "./Class";
 import { MWFunction } from "./Context";
 import { getEffectiveProps } from "./utils/getEffectiveProps";
+import { PROVIDER } from "./symbols/PROVIDER";
 
 export type Middleware<T> = Class<T> & {
   readonly mwFunction: MWFunction;
@@ -23,7 +24,7 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
   }
   Object.setPrototypeOf(MW, Class);
   MW.middlewareFor = Class;
-  Object.defineProperty(MW, "mwFunction", {
+  Object.defineProperty(MW, PROVIDER, {
     get() {
       const ThisMW = this;
       const mwFunction: MWFunction = (requestedClass, mappedClass, next) => {

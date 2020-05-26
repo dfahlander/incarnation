@@ -1,6 +1,5 @@
-import { asyncEntryPoint } from "../src/to-remove/entryPoint";
-import { provide } from "../src/to-remove/provide";
 import { use } from "../src/use";
+import { include } from "../src/include";
 
 describe("DataStore", () => {
   type KeyValueMutation =
@@ -58,8 +57,7 @@ describe("DataStore", () => {
   }
 
   it("should be possible to implement a DataStore", async () => {
-    const svc = asyncEntryPoint(MyService);
-    provide(svc).with(MemKeyValueStore);
+    const svc = include(MyService, MemKeyValueStore);
     await svc.set("foo", "bar");
     const bar = await svc.get("foo");
     expect(bar).toBe("bar from MyService");
