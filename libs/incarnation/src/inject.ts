@@ -1,7 +1,6 @@
-import { Context, MWFunction, deriveContext } from "./Context";
+import { Context, deriveContext } from "./Context";
 import { Class, AbstractClass } from "./Class";
 import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
-import { Middleware } from "./Middleware";
 import { Provider, resolveProvider } from "./Provider";
 
 /** Get or create an instance of given class based on current context.

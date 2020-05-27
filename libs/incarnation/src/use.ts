@@ -5,7 +5,6 @@ import { Topic } from "./Topic";
 import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
 import { llDelete } from "./utils/ll";
 import { CurrentExecution } from "./CurrentExecution";
-import { MWFunction, Context } from "./Context";
 import { AbstractClass } from "./Class";
 import { inject } from "./inject";
 import { Provider } from "./Provider";

@@ -1,24 +1,12 @@
 import { Class, AbstractClass } from "./Class";
 import { getWrappedProps } from "./utils/getWrappedProps";
-
-//export type ClassMapper = (requestedClass: Class) => Class;
-export type MWNextFunction = (
-  requestedClass: AbstractClass,
-  mappedClass: Class
-) => Class;
-export type MWFunction = (
-  requestedClass: AbstractClass,
-  mappedClass: Class,
-  next: MWNextFunction
-) => Class;
+import { refDeterministic } from "./utils/refDeterministic";
+import { PROVIDER } from "./symbols/PROVIDER";
+import { Provider, ClassMapper, ChainableClassMapper } from "./Provider";
 
 export interface Context {
-  //readonly getImpl: ClassMapper;
-  //readonly mwNextFn: MWNextFunction;
-  readonly mwFunction: MWFunction;
-  children: null | WeakMap<MWFunction | Context, Context>;
-  classMemo?: null | WeakMap<AbstractClass<any>, Class<any>>;
-  cachedSingletons?: null | WeakMap<AbstractClass<any>, any>;
+  readonly mapClass: ClassMapper;
+  readonly [PROVIDER]: ChainableClassMapper;
 }
 
 export interface StaticContext {
@@ -27,68 +15,58 @@ export interface StaticContext {
     new (): T; // For typings of use(), include() and inject(). const currentUser = inject(CurrentUser);
   };
   readonly root: Context;
-  readonly generic: Context;
   readonly current: Context;
 }
 
-const defaultMwFunction: MWFunction = (requestedClass, mappedClass, next) =>
+const defaultClassMapper: ClassMapper = (requestedClass, mappedClass) =>
   mappedClass;
-const defaultMwNextFn: MWNextFunction = (requestedClass, mappedClass) =>
-  mappedClass;
+const defaultProvider: ChainableClassMapper = (next) => defaultClassMapper;
 
 export const rootContext: Context = {
-  mwFunction: defaultMwFunction,
-  children: null,
-  cachedSingletons: null,
+  mapClass: defaultClassMapper,
+  [PROVIDER]: defaultProvider,
 };
 
 let current: Context = rootContext;
 
 export const Context = ((<T>(def: T) => {
-  //const vals = [];//I was about to store all previous contexts here. Now I'm thinking of a weakmap? how to fix? or subscibeZ
   return (value: T) => {
-    function CustomContext() {
+    function CustomContext(alternateValue?: T) {
       if (typeof this === "object") {
         // Constructed by new()
         // Caller is getOrCreateBoundInstance() from inject().
         return value;
       }
-      const mwFunction: MWFunction = function (
+      // Caller wants a provider that will map context to an alternate value
+      // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
+      // If so, return the cached CustomContext instead
+      const provider: ChainableClassMapper = (next) => (
         requestedClass,
-        mappedClass,
-        next
-      ) {
+        mappedClass
+      ) => {
+        if (requestedClass === CustomContext)
+          return (function CustomContextValue() {
+            return alternateValue;
+          } as unknown) as Class;
         return next(requestedClass, mappedClass);
       };
-      return { mwFunction, children: null };
+      return provider;
     }
-    // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
-    // If so, return the cached CustomContext instead
-    return (CustomContext as any) as { (val: T): Context; new (): T };
+    return (CustomContext as any) as {
+      (val: T): Provider;
+      new (): T;
+    };
   };
 }) as unknown) as StaticContext;
 
 Object.defineProperties(Context, {
   root: { value: rootContext, writable: false },
-  generic: { value: { ...rootContext }, writable: false },
   current: {
     get() {
       return current;
     },
   },
 });
-
-export function runWithMWFunction<R>(fn: () => R, mwFunction: MWFunction): R {
-  if (!mwFunction) return fn();
-  const prevCtx = current;
-  const ctx: Context = deriveContext(prevCtx, mwFunction);
-  try {
-    current = ctx;
-    return fn();
-  } finally {
-    current = prevCtx;
-  }
-}
 
 export function bindToContext<FN extends (...args: any[]) => any>(
   fn: FN,
@@ -106,7 +84,7 @@ export function bindToContext<FN extends (...args: any[]) => any>(
   };
 }
 
-export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
+/*export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
   // @ts-ignore
   const rv = class extends Class {
     constructor(...args: any[]) {
@@ -135,7 +113,7 @@ export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
   );
   Object.defineProperties(rv.prototype, wrappedProps);
   return rv;
-}
+}*/
 
 export function runInContext<FN extends () => any>(
   fn: FN,
@@ -150,54 +128,22 @@ export function runInContext<FN extends () => any>(
   }
 }
 
-export function deriveContext(
+function _deriveContext(
   parent: Context,
-  mwFunction: MWFunction
+  providerFn: ChainableClassMapper
 ): Context {
-  let result = parent.children?.get(mwFunction);
-  if (result) return result;
-  result =
-    mwFunction === parent.mwFunction
-      ? parent
-      : {
-          //mwNextFn: (requestedClass, mappedClass) => mwFunction(requestedClass, mappedClass, ctx.mwNextFn),
-          mwFunction: (requestedClass, mappedClass) =>
-            mwFunction(requestedClass, mappedClass, (rc, mc) =>
-              parent.mwFunction(rc, mc, defaultMwNextFn)
-            ),
-          children: null,
-        };
-  if (!parent.children)
-    parent.children = new WeakMap<MWFunction | Context, Context>();
-  parent.children.set(mwFunction, result);
-  return result;
+  return {
+    mapClass: providerFn(parent.mapClass),
+    [PROVIDER]: (next) => providerFn(parent[PROVIDER](next)),
+  };
 }
 
-export function resolveClass(
-  ctx: Context,
-  requestedClass: AbstractClass
-): Class {
-  const classMemo =
-    ctx.classMemo || (ctx.classMemo = new WeakMap<Class, Class>());
-  let result = classMemo.get(requestedClass);
-  if (result) return result;
-  result = ctx.mwFunction(
-    requestedClass,
-    requestedClass as Class,
-    (rc, mc) => mc
-  );
-  classMemo.set(requestedClass, result);
-  return result;
-}
+export const deriveContext: (
+  parent: Context,
+  providerFn: ChainableClassMapper
+) => Context = refDeterministic(_deriveContext);
 
-/*export function memoizedSingleObjArgFn<A extends object,R>(fn: (arg: A) => R): (arg: A) => R  {
-  const weakMap = new WeakMap<A,R>();
-  return arg => {
-    let result = weakMap.get(arg);
-    if (result) return result;
-    result = fn(arg);
-    weakMap.set(arg, result);
-    return result;
-  }
-}
-*/
+export const resolveClass = refDeterministic(
+  (ctx: Context, requestedClass: AbstractClass) =>
+    ctx.mapClass(requestedClass, requestedClass as Class)
+);

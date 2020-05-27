@@ -1,25 +1,28 @@
-import { MWFunction, Context, deriveContext } from "./Context";
+import { Context, deriveContext } from "./Context";
 import { PROVIDER } from "./symbols/PROVIDER";
-import { Provider, resolveProvider } from "./Provider";
+import { Provider, resolveProvider, ChainableClassMapper } from "./Provider";
 
 export class Environment {
-  get [PROVIDER](): MWFunction {
-    return this.context.mwFunction;
+  get [PROVIDER](): ChainableClassMapper {
+    return this.context[PROVIDER];
   }
   context: Context = Context.root;
 
   providers: Provider[] = [];
 
-  addProvider(provider: Provider) {
-    this.providers.push(provider);
-    const mwFunction = resolveProvider(provider);
-    this.context = deriveContext(this.context, mwFunction);
+  add(...providers: Provider[]) {
+    this.providers.push(...providers);
+    for (const provider of providers) {
+      const providerFn = resolveProvider(provider);
+      this.context = deriveContext(this.context, providerFn);
+    }
   }
 
-  removeProvider(provider: Provider) {
-    this.providers = this.providers.filter((p) => p !== provider);
-    this.context = this.providers.reduce(
-      (context, provider) => deriveContext(context, resolveProvider(provider)),
+  remove(...providers: Provider[]) {
+    this.providers = this.providers.filter((p) => !providers.includes(p));
+    this.context = this.providers.reduce<Context>(
+      (context: Context, provider: Provider) =>
+        deriveContext(context, resolveProvider(provider)),
       Context.root
     );
   }

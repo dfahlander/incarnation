@@ -41,8 +41,8 @@ describe("AbstractMiddleware", () => {
 
   it("should be possible to provide a middleware on an abstract class 2", () => {
     const env = new Environment();
-    env.addProvider(ConcreteStorageA);
-    env.addProvider(MyStorageMiddleware);
+    env.add(ConcreteStorageA);
+    env.add(MyStorageMiddleware);
     const storage = inject(Storage, env);
     expect(storage.load()).toBe(
       "value from ConcreteStorageA and MyStorageMiddleware"
@@ -58,8 +58,8 @@ describe("AbstractMiddleware", () => {
 
   it("should be possible to provide a middleware on an abstract class before a concrete class is provided 2", () => {
     const env = new Environment();
-    env.addProvider(MyStorageMiddleware);
-    env.addProvider(ConcreteStorageB);
+    env.add(MyStorageMiddleware);
+    env.add(ConcreteStorageB);
     const storage = inject(Storage, env);
     expect(storage.load()).toBe(
       "value from ConcreteStorageB and MyStorageMiddleware"

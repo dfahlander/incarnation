@@ -1,14 +1,11 @@
 import { Class, AbstractClass } from "./Class";
-import { MWFunction } from "./Context";
-import { getEffectiveProps } from "./utils/getEffectiveProps";
 import { PROVIDER } from "./symbols/PROVIDER";
+import { HasChainableClassMapper, ChainableClassMapper } from "./Provider";
 
-export type Middleware<T> = Class<T> & {
-  readonly mwFunction: MWFunction;
-  middlewareFor: Class<T>;
-};
-
-export const middlewareParent = Symbol();
+export type Middleware<T> = Class<T> &
+  HasChainableClassMapper & {
+    middlewareFor: Class<T>;
+  };
 
 export function AbstractMiddleware<T>(
   Class: AbstractClass<T>
@@ -27,7 +24,10 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
   Object.defineProperty(MW, PROVIDER, {
     get() {
       const ThisMW = this;
-      const mwFunction: MWFunction = (requestedClass, mappedClass, next) => {
+      const provider: ChainableClassMapper = (next) => (
+        requestedClass,
+        mappedClass
+      ) => {
         const ConcreteClassOrMW = next(requestedClass, mappedClass);
         const ConcreteClass =
           (ConcreteClassOrMW as Middleware<any>).middlewareFor ||
@@ -45,7 +45,7 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
         }
         return ConcreteClassOrMW;
       };
-      return mwFunction;
+      return provider;
     },
   });
   MW.prototype = new Proxy(Class.prototype, {

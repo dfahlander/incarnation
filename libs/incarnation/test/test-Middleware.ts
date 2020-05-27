@@ -59,10 +59,10 @@ describe("Middleware", () => {
 
   it("should invoke middleware in front of Storage when a Storage is requested but specialized storage provided", () => {
     const env = new Environment();
-    env.addProvider(SpecializedStorage);
+    env.add(SpecializedStorage);
     let svc = inject(MyService, env);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
-    env.addProvider(MyStorageMiddleware);
+    env.add(MyStorageMiddleware);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MyStorageMiddleware"
@@ -72,10 +72,10 @@ describe("Middleware", () => {
   it("should invoke middleware in front of SpecializedStorage when Storage is requested but SpecializedStorage provided", () => {
     const env = new Environment();
     let svc = inject(MyService);
-    env.addProvider(SpecializedStorage);
+    env.add(SpecializedStorage);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
-    env.addProvider(MySpecializedStorageMiddleware);
+    env.add(MySpecializedStorageMiddleware);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MySpecializedStorageMiddleware"
@@ -86,18 +86,18 @@ describe("Middleware", () => {
     let svc = inject(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
     const env = new Environment();
-    env.addProvider(MyStorageMiddleware);
-    env.addProvider(My2ndStorageMW);
+    env.add(MyStorageMiddleware);
+    env.add(My2ndStorageMW);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from Storage and MyStorageMiddleware and My2ndStorageMW"
     ); // The real test.
-    env.addProvider(MySpecializedStorageMiddleware); // Won't be invoked until SpecialStorage is provided.
+    env.add(MySpecializedStorageMiddleware); // Won't be invoked until SpecialStorage is provided.
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from Storage and MyStorageMiddleware and My2ndStorageMW"
     ); // Still same result as SpecialStorage wasn't used.
-    env.addProvider(SpecializedStorage);
+    env.add(SpecializedStorage);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MyStorageMiddleware and My2ndStorageMW and MySpecializedStorageMiddleware"

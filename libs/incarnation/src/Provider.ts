@@ -1,33 +1,50 @@
-import { MWFunction } from "./Context";
 import { PROVIDER } from "./symbols/PROVIDER";
-import { Class } from "./Class";
-import { refDeterministic1 } from "./utils/refDeterministic";
+import { Class, AbstractClass } from "./Class";
+import { refDeterministic } from "./utils/refDeterministic";
 
-export type Provider = MWFunction | ImplicitProvider | Class;
+export type Provider = ChainableClassMapper | HasChainableClassMapper | Class;
 
-export interface ImplicitProvider {
-  readonly [PROVIDER]: MWFunction;
+export type ChainableClassMapper = (next: ClassMapper) => ClassMapper;
+
+export type ClassMapper = (
+  requestedClass: AbstractClass,
+  mappedClass: Class
+) => Class;
+
+export interface HasChainableClassMapper {
+  readonly [PROVIDER]: ChainableClassMapper;
 }
 
-export function resolveProvider(provider: Provider): MWFunction {
-  return PROVIDER in provider
-    ? // A class that extends Middleware(SomeAPI) or a Context
-      provider[PROVIDER]
-    : (provider as any).prototype &&
-      Object.getPrototypeOf((provider as any).prototype) !== Object.prototype
-    ? // A class that extends something
-      getClassProvider(provider as Class)
-    : // A plain function (ClassMapperMiddleware):
-      (provider as MWFunction);
-}
+// Decorate function with refDeterministic1, so that we
+// always return same ProviderFunction, given the same Provider argument.
+export const resolveProvider = refDeterministic(_resolveProvider);
 
-const getClassProvider = refDeterministic1((ConcreteClass: Class) => {
-  const mw: MWFunction = (requestedClass, mappedClass, next) =>
-    next(
-      requestedClass,
-      ConcreteClass.prototype instanceof mappedClass
-        ? ConcreteClass
-        : mappedClass
+function _resolveProvider(provider: Provider): ChainableClassMapper {
+  if (!provider) throw TypeError(`Given provider is falsy`);
+  if (PROVIDER in provider) {
+    // An object that can return a provider.
+    return provider[PROVIDER];
+  }
+  if (typeof provider !== "function")
+    throw TypeError(
+      `Given provider is neither function, class or {[PROVIDER]}`
     );
-  return mw;
-});
+  if (
+    (provider as any).prototype &&
+    Object.getPrototypeOf((provider as any).prototype) !== Object.prototype
+  ) {
+    // A class that extends something
+    return getClassProvider(provider as Class);
+  }
+  // A plain ProviderFunction
+  return provider as ChainableClassMapper;
+}
+
+const getClassProvider = (ConcreteClass: Class) => (next: ClassMapper) => (
+  requestedClass: AbstractClass,
+  mappedClass: Class
+) =>
+  next(
+    requestedClass,
+    ConcreteClass.prototype instanceof mappedClass ? ConcreteClass : mappedClass
+  );

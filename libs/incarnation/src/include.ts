@@ -1,7 +1,6 @@
 import { Class, AbstractClass } from "./Class";
 import { Promisified } from "./Promisified";
 import { promisify } from "./promisifier";
-import { Context, MWFunction } from "./Context";
 import { inject } from "./inject";
 import { IsAdaptive } from "./IsAdaptive";
 import { Provider } from "./Provider";
