@@ -22,38 +22,40 @@ describe("Middleware", () => {
     }
   }
 
-  class MyStorageMiddleware extends Middleware(Storage) {
-    load() {
-      return super.load() + " and MyStorageMiddleware";
-    }
-  }
+  const myStorageMiddleware = new Middleware(
+    Storage,
+    (DownStorge) =>
+      class extends DownStorge {
+        load() {
+          return super.load() + " and MyStorageMiddleware";
+        }
+      }
+  );
 
-  /*
-  
-  const MyStorageMiddleware = Middleware(Storage, (next) => ({
-    load() {
-      return next.load() + " and MyStorageMiddleware";
-    },
-  }));
+  const my2ndStorageMW = new Middleware(
+    Storage,
+    (SuperStorage) =>
+      class extends SuperStorage {
+        load() {
+          return super.load() + " and My2ndStorageMW";
+        }
+      }
+  );
 
-  */
-
-  class My2ndStorageMW extends Middleware(Storage) {
-    load() {
-      return super.load() + " and My2ndStorageMW";
-    }
-  }
-
-  class MySpecializedStorageMiddleware extends Middleware(SpecializedStorage) {
-    load() {
-      return super.load() + " and MySpecializedStorageMiddleware";
-    }
-  }
+  const mySpecializedStorageMiddleware = new Middleware(
+    SpecializedStorage,
+    (SuperSpecStorage) =>
+      class extends SuperSpecStorage {
+        load() {
+          return super.load() + " and MySpecializedStorageMiddleware";
+        }
+      }
+  );
 
   it("should be possible to inject middleware for a certain class", () => {
     let svc = inject(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
-    svc = inject(MyService, MyStorageMiddleware);
+    svc = inject(MyService, myStorageMiddleware);
     expect(svc.sayHi()).toBe("Hi, value from Storage and MyStorageMiddleware"); // The real test.
   });
 
@@ -62,7 +64,7 @@ describe("Middleware", () => {
     env.add(SpecializedStorage);
     let svc = inject(MyService, env);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
-    env.add(MyStorageMiddleware);
+    env.add(myStorageMiddleware);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MyStorageMiddleware"
@@ -75,7 +77,7 @@ describe("Middleware", () => {
     env.add(SpecializedStorage);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe("Hi, value from SpecializedStorage"); // Verify default value
-    env.add(MySpecializedStorageMiddleware);
+    env.add(mySpecializedStorageMiddleware);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from SpecializedStorage and MySpecializedStorageMiddleware"
@@ -86,13 +88,13 @@ describe("Middleware", () => {
     let svc = inject(MyService);
     expect(svc.sayHi()).toBe("Hi, value from Storage"); // Verify default value
     const env = new Environment();
-    env.add(MyStorageMiddleware);
-    env.add(My2ndStorageMW);
+    env.add(myStorageMiddleware);
+    env.add(my2ndStorageMW);
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from Storage and MyStorageMiddleware and My2ndStorageMW"
     ); // The real test.
-    env.add(MySpecializedStorageMiddleware); // Won't be invoked until SpecialStorage is provided.
+    env.add(mySpecializedStorageMiddleware); // Won't be invoked until SpecialStorage is provided.
     svc = inject(MyService, env);
     expect(svc.sayHi()).toBe(
       "Hi, value from Storage and MyStorageMiddleware and My2ndStorageMW"

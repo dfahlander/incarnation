@@ -1,5 +1,5 @@
 import { inject } from "../src/inject";
-import { Middleware, AbstractMiddleware } from "../src/Middleware";
+import { Middleware } from "../src/Middleware";
 import { Environment } from "../src/Environment";
 
 describe("AbstractMiddleware", () => {
@@ -19,11 +19,15 @@ describe("AbstractMiddleware", () => {
     }
   }
 
-  class MyStorageMiddleware extends AbstractMiddleware(Storage) {
-    load() {
-      return super.load() + " and MyStorageMiddleware";
-    }
-  }
+  const myStorageMiddleware = new Middleware(
+    Storage,
+    (DownStorage) =>
+      class extends DownStorage {
+        load() {
+          return super.load() + " and MyStorageMiddleware";
+        }
+      }
+  );
 
   it("should be possible to inject a concrete storage", () => {
     let storage = inject(Storage, ConcreteStorageA);
@@ -33,7 +37,7 @@ describe("AbstractMiddleware", () => {
   });
 
   it("should be possible to provide a middleware on an abstract class", () => {
-    const storage = inject(Storage, ConcreteStorageA, MyStorageMiddleware);
+    const storage = inject(Storage, ConcreteStorageA, myStorageMiddleware);
     expect(storage.load()).toBe(
       "value from ConcreteStorageA and MyStorageMiddleware"
     );
@@ -42,7 +46,7 @@ describe("AbstractMiddleware", () => {
   it("should be possible to provide a middleware on an abstract class 2", () => {
     const env = new Environment();
     env.add(ConcreteStorageA);
-    env.add(MyStorageMiddleware);
+    env.add(myStorageMiddleware);
     const storage = inject(Storage, env);
     expect(storage.load()).toBe(
       "value from ConcreteStorageA and MyStorageMiddleware"
@@ -50,7 +54,7 @@ describe("AbstractMiddleware", () => {
   });
 
   it("should be possible to provide a middleware on an abstract class before a concrete class is provided", () => {
-    const storage = inject(Storage, MyStorageMiddleware, ConcreteStorageB);
+    const storage = inject(Storage, myStorageMiddleware, ConcreteStorageB);
     expect(storage.load()).toBe(
       "value from ConcreteStorageB and MyStorageMiddleware"
     );
@@ -58,7 +62,7 @@ describe("AbstractMiddleware", () => {
 
   it("should be possible to provide a middleware on an abstract class before a concrete class is provided 2", () => {
     const env = new Environment();
-    env.add(MyStorageMiddleware);
+    env.add(myStorageMiddleware);
     env.add(ConcreteStorageB);
     const storage = inject(Storage, env);
     expect(storage.load()).toBe(
