@@ -2,11 +2,11 @@ import { Class, AbstractClass } from "./Class";
 import { getWrappedProps } from "./utils/getWrappedProps";
 import { refDeterministic } from "./utils/refDeterministic";
 import { PROVIDER } from "./symbols/PROVIDER";
-import { Provider, ClassMapper, ChainableClassMapper } from "./Provider";
+import { Provider, ClassMapper, ProviderFn } from "./Provider";
 
 export interface Context {
   readonly mapClass: ClassMapper;
-  readonly [PROVIDER]: ChainableClassMapper;
+  readonly [PROVIDER]: ProviderFn;
 }
 
 export interface StaticContext {
@@ -20,7 +20,7 @@ export interface StaticContext {
 
 const defaultClassMapper: ClassMapper = (requestedClass, mappedClass) =>
   mappedClass;
-const defaultProvider: ChainableClassMapper = (next) => defaultClassMapper;
+const defaultProvider: ProviderFn = (next) => defaultClassMapper;
 
 export const rootContext: Context = {
   mapClass: defaultClassMapper,
@@ -40,10 +40,7 @@ export const Context = ((<T>(def: T) => {
       // Caller wants a provider that will map context to an alternate value
       // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
       // If so, return the cached CustomContext instead
-      const provider: ChainableClassMapper = (next) => (
-        requestedClass,
-        mappedClass
-      ) => {
+      const provider: ProviderFn = (next) => (requestedClass, mappedClass) => {
         if (requestedClass === CustomContext)
           return (function CustomContextValue() {
             return alternateValue;
@@ -128,10 +125,7 @@ export function runInContext<FN extends () => any>(
   }
 }
 
-function _deriveContext(
-  parent: Context,
-  providerFn: ChainableClassMapper
-): Context {
+function _deriveContext(parent: Context, providerFn: ProviderFn): Context {
   return {
     mapClass: providerFn(parent.mapClass),
     [PROVIDER]: (next) => providerFn(parent[PROVIDER](next)),
@@ -140,7 +134,7 @@ function _deriveContext(
 
 export const deriveContext: (
   parent: Context,
-  providerFn: ChainableClassMapper
+  providerFn: ProviderFn
 ) => Context = refDeterministic(_deriveContext);
 
 export const resolveClass = refDeterministic(

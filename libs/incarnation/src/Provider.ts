@@ -2,20 +2,20 @@ import { PROVIDER } from "./symbols/PROVIDER";
 import { Class, AbstractClass } from "./Class";
 import { refDeterministic } from "./utils/refDeterministic";
 
-export type Provider = ChainableClassMapper | HasChainableClassMapper | Class;
+export type Provider = ProviderFn | HasProviderFn | Class;
 
-export type ChainableClassMapper = (next: ClassMapper) => ClassMapper;
+export type ProviderFn = (next: ClassMapper) => ClassMapper;
 
 export type ClassMapper = (
   requestedClass: AbstractClass,
   mappedClass: Class
 ) => Class;
 
-export interface HasChainableClassMapper {
-  readonly [PROVIDER]: ChainableClassMapper;
+export interface HasProviderFn {
+  readonly [PROVIDER]: ProviderFn;
 }
 
-export function resolveProvider(provider: Provider): ChainableClassMapper {
+export function resolveProvider(provider: Provider): ProviderFn {
   if (!provider) throw TypeError(`Given provider is falsy`);
   if (PROVIDER in provider) {
     // An object that can return a provider.
@@ -33,11 +33,13 @@ export function resolveProvider(provider: Provider): ChainableClassMapper {
     return getClassProvider(provider as Class);
   }
   // A plain ProviderFunction
-  return provider as ChainableClassMapper;
+  return provider as ProviderFn;
 }
 
-const getClassProvider = refDeterministic(
-  (ConcreteClass: Class) => (next: ClassMapper) => (
+export const getClassProvider = refDeterministic(_getClassProvider);
+
+function _getClassProvider(ConcreteClass: Class): ProviderFn {
+  return (next: ClassMapper) => (
     requestedClass: AbstractClass,
     mappedClass: Class
   ) =>
@@ -46,5 +48,5 @@ const getClassProvider = refDeterministic(
       ConcreteClass.prototype instanceof mappedClass
         ? ConcreteClass
         : mappedClass
-    )
-);
+    );
+}

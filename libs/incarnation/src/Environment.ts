@@ -1,9 +1,9 @@
 import { Context, deriveContext } from "./Context";
 import { PROVIDER } from "./symbols/PROVIDER";
-import { Provider, resolveProvider, ChainableClassMapper } from "./Provider";
+import { Provider, resolveProvider, ProviderFn } from "./Provider";
 
 export class Environment {
-  get [PROVIDER](): ChainableClassMapper {
+  get [PROVIDER](): ProviderFn {
     return this.context[PROVIDER];
   }
   context: Context = Context.root;

@@ -1,9 +1,9 @@
 import { Class, AbstractClass } from "./Class";
 import { PROVIDER } from "./symbols/PROVIDER";
-import { HasChainableClassMapper, ChainableClassMapper } from "./Provider";
+import { HasProviderFn, ProviderFn } from "./Provider";
 
 export type Middleware<T> = Class<T> &
-  HasChainableClassMapper & {
+  HasProviderFn & {
     middlewareFor: Class<T>;
   };
 
@@ -24,10 +24,7 @@ export function Middleware<T>(Class: Class<T>): Middleware<T> {
   Object.defineProperty(MW, PROVIDER, {
     get() {
       const ThisMW = this;
-      const provider: ChainableClassMapper = (next) => (
-        requestedClass,
-        mappedClass
-      ) => {
+      const provider: ProviderFn = (next) => (requestedClass, mappedClass) => {
         const ConcreteClassOrMW = next(requestedClass, mappedClass);
         const ConcreteClass =
           (ConcreteClassOrMW as Middleware<any>).middlewareFor ||
