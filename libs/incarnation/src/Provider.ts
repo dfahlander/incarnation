@@ -15,11 +15,7 @@ export interface HasChainableClassMapper {
   readonly [PROVIDER]: ChainableClassMapper;
 }
 
-// Decorate function with refDeterministic1, so that we
-// always return same ProviderFunction, given the same Provider argument.
-export const resolveProvider = refDeterministic(_resolveProvider);
-
-function _resolveProvider(provider: Provider): ChainableClassMapper {
+export function resolveProvider(provider: Provider): ChainableClassMapper {
   if (!provider) throw TypeError(`Given provider is falsy`);
   if (PROVIDER in provider) {
     // An object that can return a provider.
@@ -40,11 +36,15 @@ function _resolveProvider(provider: Provider): ChainableClassMapper {
   return provider as ChainableClassMapper;
 }
 
-const getClassProvider = (ConcreteClass: Class) => (next: ClassMapper) => (
-  requestedClass: AbstractClass,
-  mappedClass: Class
-) =>
-  next(
-    requestedClass,
-    ConcreteClass.prototype instanceof mappedClass ? ConcreteClass : mappedClass
-  );
+const getClassProvider = refDeterministic(
+  (ConcreteClass: Class) => (next: ClassMapper) => (
+    requestedClass: AbstractClass,
+    mappedClass: Class
+  ) =>
+    next(
+      requestedClass,
+      ConcreteClass.prototype instanceof mappedClass
+        ? ConcreteClass
+        : mappedClass
+    )
+);
