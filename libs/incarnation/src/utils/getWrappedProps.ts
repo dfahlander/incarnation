@@ -16,6 +16,7 @@ export function getWrappedProps(
   for (const [propName, { get, set, value, enumerable }] of Object.entries(
     fnProps
   )) {
+    if (propName[0] === "$") continue;
     const externalProp: PropertyDescriptor = { enumerable };
     if (get) {
       externalProp.get = wrapper(get, propName, "get");

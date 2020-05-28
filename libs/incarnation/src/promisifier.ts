@@ -24,7 +24,7 @@ export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
       }
       throw x;
     }
-    if (rv && (rv[IsLazy] || rv.$flavors)) {
+    if (rv && rv[IsLazy]) {
       return promisifyIfAdaptive(rv);
     } else {
       return Promise.resolve(rv).then(promisifyIfAdaptive);
@@ -51,6 +51,7 @@ export function promisify<T extends IsAdaptive>(obj: T): Promisified<T> {
     );
     promisified = Object.create(obj, promisifyingProps) as Promisified<T>;
     obj.$flavors.promise = promisified;
+    obj[IsLazy] = true;
   }
   return promisified;
 }

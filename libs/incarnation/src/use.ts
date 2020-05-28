@@ -8,6 +8,7 @@ import { CurrentExecution } from "./CurrentExecution";
 import { AbstractClass } from "./Class";
 import { inject } from "./inject";
 import { Provider } from "./Provider";
+import { IsLazy } from "./IsLazy";
 
 const enum ActiveQueryStatus {
   PENDING = 1,
@@ -150,19 +151,20 @@ function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
       throw query.error;
     }
     // Not cached. Call method to get it:
-    let promise = fn.apply(this, args);
-    if (!promise || typeof promise.then !== "function") {
+    const result = fn.apply(this, args);
+    if (!result || typeof result.then !== "function") {
       // If the method, getter or setter ever returns a non-promise,
       // assume it will never in the future return a promise.
       // Stop intercepting.
       bypass = true;
-      return promise;
+      return suspendifyIfAdaptive(result);
     }
 
     // Handle returned promise
-    promise = Promise.resolve(promise)
+    const promise = Promise.resolve(result)
       .then(
         (result: any) => {
+          newQuery.hasResult = true;
           newQuery.result = result;
           newQuery.promise = null;
           newQuery.error = null;
@@ -213,6 +215,8 @@ function suspendify<T extends IsAdaptive>(obj: T): Suspendified<T> {
       true
     );
     suspendified = Object.create(obj, suspendifyingProps) as Suspendified<T>;
+    obj.$flavors.suspense = suspendified;
+    obj[IsLazy] = true;
   }
   return suspendified;
 }

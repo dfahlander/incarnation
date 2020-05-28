@@ -12,10 +12,14 @@ export type PromisifiedMethodOrGetter<T> = T extends (
 ) => infer R // It's a method!
   ? R extends IsLazy // Return value is a lazy-type value, like a Collection
     ? (...args: TArgs) => PromisifiedIfAdaptive<R> // Don't promisify directly but if return value is adaptive, promisify it!
-    : R extends Promise<infer P> // Return value is already a promise
-    ? (...args: TArgs) => Promise<PromisifiedIfAdaptive<P>> // Don't promisify directly but if return value is adaptive, promisify it!
+    : R extends Promise<infer IR> // Return value is already a promise
+    ? (...args: TArgs) => Promise<PromisifiedIfAdaptive<IR>> // Don't promisify directly but if return value is adaptive, promisify it!
     : (...args: TArgs) => Promise<PromisifiedIfAdaptive<R>> // Return promisified and recursively promisify result
-  : PromisifiedIfAdaptive<T>;
+  : T extends Promise<infer IR>
+  ? Promise<PromisifiedIfAdaptive<IR>>
+  : T extends IsLazy
+  ? PromisifiedIfAdaptive<T>
+  : Promise<PromisifiedIfAdaptive<T>>;
 
 export type PromisifiedIfAdaptive<T> = T extends IsAdaptive
   ? {
@@ -26,6 +30,7 @@ export type PromisifiedIfAdaptive<T> = T extends IsAdaptive
 export type Promisified<T> = {
   [M in keyof T]: PromisifiedMethodOrGetter<T[M]>;
 } & {
+  [IsLazy]?: boolean;
   $flavors: {
     orig: Orig<T>;
     suspense: Suspendified<T>;
