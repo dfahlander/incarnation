@@ -81,7 +81,9 @@ export function bindToContext<FN extends (...args: any[]) => any>(
   };
 }
 
-/*export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
+// This function isn't used yet. But it could possibly be used by
+// for example Middleware.ts to bind each superclass to the context.
+export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
   // @ts-ignore
   const rv = class extends Class {
     constructor(...args: any[]) {
@@ -110,7 +112,7 @@ export function bindToContext<FN extends (...args: any[]) => any>(
   );
   Object.defineProperties(rv.prototype, wrappedProps);
   return rv;
-}*/
+}
 
 export function runInContext<FN extends () => any>(
   fn: FN,
