@@ -11,7 +11,11 @@ export type SuspendifiedMethodOrGetter<T> = T extends (
     : (...args: TArgs) => SuspendifiedIfAdaptive<R>
   : SuspendifiedIfAdaptive<T>;
 
-export type SuspendifiedIfAdaptive<T> = T extends IsAdaptive
+export type SuspendifiedIfAdaptive<T> = T extends {
+  $flavors: { suspense: infer S };
+}
+  ? S // The type has its own explicitely declared suspense-version of it. Use that!
+  : T extends IsAdaptive
   ? {
       [M in keyof T]: SuspendifiedMethodOrGetter<T[M]>;
     }

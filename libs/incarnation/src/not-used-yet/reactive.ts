@@ -7,7 +7,7 @@ import {
   SubscriptionObserver,
 } from "./Observable";
 import { CurrentExecution, Execution } from "../CurrentExecution";
-import { ActiveQuery } from "../use";
+import { ActiveQuery } from "../ActiveQuery";
 import { CircularLinkedSubscriber, Topic } from "../Topic";
 
 export type ReactiveMethodOrGetter<T> = T extends (

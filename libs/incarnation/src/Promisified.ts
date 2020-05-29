@@ -21,7 +21,11 @@ export type PromisifiedMethodOrGetter<T> = T extends (
   ? PromisifiedIfAdaptive<T>
   : Promise<PromisifiedIfAdaptive<T>>;
 
-export type PromisifiedIfAdaptive<T> = T extends IsAdaptive
+export type PromisifiedIfAdaptive<T> = T extends {
+  $flavors: { promise: infer P };
+}
+  ? P // The type has its own explicitely typed promisified version of it. Use that!
+  : T extends IsAdaptive
   ? {
       [M in keyof T]: PromisifiedMethodOrGetter<T[M]>;
     }

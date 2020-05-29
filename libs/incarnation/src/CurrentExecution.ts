@@ -1,5 +1,5 @@
 import { Topic } from "./Topic";
-import { ActiveQuery } from "./use";
+import { ActiveQuery } from "./ActiveQuery";
 
 export interface Execution {
   queries: ActiveQuery[];

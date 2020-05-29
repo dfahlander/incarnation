@@ -1,8 +1,6 @@
 import { include } from "../src/include";
 import { use } from "../src/use";
 import { inject } from "../src/inject";
-import { run } from "../src/run";
-import { IsLazy } from "../dist/IsLazy";
 
 describe("promisificability", () => {
   const FRIENDS = [
