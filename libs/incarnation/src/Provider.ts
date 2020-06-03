@@ -38,7 +38,7 @@ export function resolveProvider(provider: Provider): ProviderFn {
 
 export const getClassProvider = refDeterministic(_getClassProvider);
 
-function _getClassProvider(ConcreteClass: Class): ProviderFn {
+export function _getClassProvider(ConcreteClass: Class): ProviderFn {
   return (next: ClassMapper) => (
     requestedClass: AbstractClass,
     mappedClass: Class

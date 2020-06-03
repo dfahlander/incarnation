@@ -1,5 +1,6 @@
 import { use } from "../src/use";
 import { include } from "../src/include";
+import { DataStore } from "../src/DataStore";
 
 describe("DataStore", () => {
   type KeyValueMutation =
@@ -15,7 +16,6 @@ describe("DataStore", () => {
   abstract class KeyValueStore extends DataStore<KeyValueMutation> {
     abstract async get(key: any): Promise<any>;
     abstract async count(): Promise<number>;
-    abstract async mutate(mutations: KeyValueMutation[]): Promise<void>;
   }
 
   class MyService {
@@ -25,10 +25,10 @@ describe("DataStore", () => {
       return result + " from MyService";
     }
     set(key: string, value: string) {
-      this.store.set(key, value);
+      this.store.mutate([{ type: "set", key, value }]);
     }
     clear() {
-      this.store.clear();
+      this.store.mutate([{ type: "clear" }]);
     }
     count() {
       return this.store.count() + 1;

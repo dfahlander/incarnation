@@ -2,12 +2,17 @@ import { IsLazy } from "./IsLazy";
 import { IsAdaptive } from "./IsAdaptive";
 import { getWrappedProps } from "./utils/getWrappedProps";
 import { Promisified } from "./Promisified";
+import { Context, bindToContext } from "./Context";
 
 export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
   function run(...args: any[]) {
+    const runAgain = bindToContext(run, Context.current);
     const rerunWhenPromiseResolves = (thenable: PromiseLike<any>) =>
       thenable.then(
-        () => run.apply(this, args),
+        () => {
+          debugger;
+          return runAgain(...args);
+        },
         (error) =>
           // Allow also async methods to call suspending apis
           error && typeof error.then === "function"
@@ -45,13 +50,12 @@ export function promisify<T extends IsAdaptive>(obj: T): Promisified<T> {
   let promisified = obj.$flavors.promise as Promisified<T> | undefined;
   if (!promisified) {
     const promisifyingProps = getWrappedProps(
-      obj,
+      obj.$flavors.orig || obj,
       (origFn) => promisifyMethodOrGetter(origFn),
       true
     );
     promisified = Object.create(obj, promisifyingProps) as Promisified<T>;
     obj.$flavors.promise = promisified;
-    obj[IsLazy] = true;
   }
   return promisified;
 }

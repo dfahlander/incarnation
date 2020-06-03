@@ -11,7 +11,7 @@ export interface Context {
 
 export interface StaticContext {
   <T>(def: T): {
-    (val: T): Context; // When used in second arg of inject(). const mySvc = use(MySvc, CurrentUser("arne"));
+    (val: T): ProviderFn; // When used in second arg of inject(). const mySvc = use(MySvc, CurrentUser("arne"));
     new (): T; // For typings of use(), include() and inject(). const currentUser = inject(CurrentUser);
   };
   readonly root: Context;
@@ -69,7 +69,7 @@ export function bindToContext<FN extends (...args: any[]) => any>(
   fn: FN,
   ctx: Context,
   target: any = null
-) {
+): FN {
   return function () {
     const prevCtx = current;
     try {
@@ -78,7 +78,7 @@ export function bindToContext<FN extends (...args: any[]) => any>(
     } finally {
       current = prevCtx;
     }
-  };
+  } as FN;
 }
 
 // This function isn't used yet. But it could possibly be used by
