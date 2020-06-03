@@ -15,6 +15,7 @@ export interface StaticContext {
     new (): T; // For typings of use(), include() and inject(). const currentUser = inject(CurrentUser);
   };
   readonly root: Context;
+  readonly base: Context;
   readonly current: Context;
 }
 
@@ -26,6 +27,8 @@ export const rootContext: Context = {
   mapClass: defaultClassMapper,
   [PROVIDER]: defaultProvider,
 };
+
+export const baseContext = { ...rootContext };
 
 let current: Context = rootContext;
 
@@ -58,6 +61,7 @@ export const Context = ((<T>(def: T) => {
 
 Object.defineProperties(Context, {
   root: { value: rootContext, writable: false },
+  base: { value: baseContext, writable: false },
   current: {
     get() {
       return current;

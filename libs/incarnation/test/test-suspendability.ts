@@ -43,9 +43,7 @@ describe("suspendability", () => {
   it("should convert adaptable props when switching btwn use() and include()", async () => {
     await run(() => {
       const db = use(DB);
-      debugger;
       const friendColl = db.friends;
-      //console.log(friendColl.$flavors.promise === (friendColl as any));
       const friends = db.friends.listFriends();
       expect(friends).toEqual(FRIENDS);
       const numFriends = db.numFriends;

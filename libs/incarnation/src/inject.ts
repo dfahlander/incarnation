@@ -1,4 +1,4 @@
-import { Context, deriveContext } from "./Context";
+import { Context, deriveContext, rootContext, baseContext } from "./Context";
 import { Class, AbstractClass } from "./Class";
 import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
 import { Provider, resolveProvider } from "./Provider";
@@ -19,7 +19,7 @@ export function inject<T extends object>(
   ...providers: Provider[]
 ): T extends new () => infer I ? I : T;
 export function inject<T extends object>(Class: AbstractClass<T>): T {
-  let ctx = Context.current;
+  let ctx = Context.current === rootContext ? baseContext : Context.current;
   if (arguments.length > 1) {
     for (let i = 1; i < arguments.length; ++i) {
       ctx = deriveContext(ctx, resolveProvider(arguments[i] as Provider));

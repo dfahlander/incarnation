@@ -1,11 +1,7 @@
-import { promisifyMethodOrGetter } from "./promisifier";
-import { Context, deriveContext, runInContext } from "./Context";
-import { ProviderFn } from "./Provider";
-
-const dummyProvider: ProviderFn = (next) => (orig, mapped) =>
-  next(orig, mapped);
+import { Context, bindToContext, baseContext, rootContext } from "./Context";
+import { suspendifyMethodOrGetter } from "./suspendify";
 
 export function run<TResult>(fn: () => TResult): Promise<TResult> {
-  const ctx = deriveContext(Context.current, dummyProvider);
-  return runInContext(promisifyMethodOrGetter(fn), ctx);
+  const ctx = Context.current === rootContext ? baseContext : Context.current;
+  return suspendifyMethodOrGetter(bindToContext(fn, ctx))();
 }
