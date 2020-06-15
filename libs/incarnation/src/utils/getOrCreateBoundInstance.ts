@@ -1,5 +1,11 @@
 import { Class, AbstractClass } from "../Class";
-import { Context, runInContext, resolveClass, bindToContext } from "../Context";
+import {
+  Context,
+  runInContext,
+  resolveClass,
+  bindToContext,
+  construct,
+} from "../Context";
 import { getWrappedProps } from "./getWrappedProps";
 import { refDeterministic } from "./refDeterministic";
 import { IsLazy } from "../IsLazy";
@@ -16,7 +22,7 @@ export const getOrCreateBoundInstance = refDeterministic(
 function _getOrCreateBoundInstance(ctx: Context, Class: AbstractClass) {
   // Resolve class
   const ConcreteClass = resolveClass(ctx, Class);
-  const instance = runInContext(() => new ConcreteClass(), ctx);
+  const instance = construct(ConcreteClass, ctx);
   instance.$flavors = { orig: instance, promise: null, suspense: null };
   instance[IsLazy] = true;
   const wrappedProps = getWrappedProps(

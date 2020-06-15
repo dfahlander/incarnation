@@ -39,16 +39,16 @@ export function observifyMethodOrGetter(
     let lastResult = null;
     let status: "pending" | "error" | "success" = "pending";
     let closed = false;
-    const topic = new Topic();
+    const outerTopic = new Topic();
     let innerSubscriptions: {
-      query: ActiveQuery;
+      topic: Topic;
       node: CircularLinkedSubscriber;
     }[] = [];
-    topic.hasSubscribersChanged = () => {
-      if (!topic.hasSubscribers) {
+    outerTopic.hasSubscribersChanged = () => {
+      if (!outerTopic.hasSubscribers) {
         if (!closed) {
-          innerSubscriptions.forEach(({ query, node }) =>
-            query.topic.unsubscribe(node)
+          innerSubscriptions.forEach(({ topic, node }) =>
+            topic.unsubscribe(node)
           );
           innerSubscriptions = [];
           closed = true;
@@ -58,14 +58,14 @@ export function observifyMethodOrGetter(
     run();
 
     function subscribe(observer: SubscriptionObserver<any>): () => void {
-      const node = topic.subscribe(() => {
+      const node = outerTopic.subscribe(() => {
         if (status === "success") {
           observer.next(lastResult);
         } else {
           observer.error(lastResult);
         }
       });
-      return () => topic.unsubscribe(node);
+      return () => outerTopic.unsubscribe(node);
     }
 
     if (
@@ -94,8 +94,8 @@ export function observifyMethodOrGetter(
 
       let rv: any;
       const parentExecution = CurrentExecution.current;
-      const { queries } = (CurrentExecution.current = {
-        queries: [],
+      const { topics } = (CurrentExecution.current = {
+        topics: [],
       } as Execution);
       try {
         rv = fn.apply(thiz, args);
@@ -107,20 +107,20 @@ export function observifyMethodOrGetter(
         }
         status = "error";
         lastResult = x;
-        topic.notify();
+        outerTopic.notify();
         return;
       }
       const value = rv;
       if (status !== "success" || lastResult !== value) {
         status = "success";
         lastResult = value;
-        topic.notify();
+        outerTopic.notify();
       }
       let reexecuted = false;
       const onNotify = function () {
         if (closed) return;
-        innerSubscriptions.forEach(({ query, node }) =>
-          query.topic.unsubscribe(node)
+        innerSubscriptions.forEach(({ topic, node }) =>
+          topic.unsubscribe(node)
         );
         innerSubscriptions = [];
         if (!reexecuted) {
@@ -128,9 +128,9 @@ export function observifyMethodOrGetter(
           run();
         }
       };
-      innerSubscriptions = queries.map((query) => ({
-        query,
-        node: query.topic.subscribe(onNotify),
+      innerSubscriptions = topics.map((topic) => ({
+        topic,
+        node: topic.subscribe(onNotify),
       }));
     }
   }

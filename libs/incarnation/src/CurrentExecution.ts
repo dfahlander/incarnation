@@ -1,8 +1,7 @@
 import { Topic } from "./Topic";
-import { ActiveQuery } from "./ActiveQuery";
 
 export interface Execution {
-  queries: ActiveQuery[];
+  topics: Topic[];
 }
 
 export const _CurrentExecution = {

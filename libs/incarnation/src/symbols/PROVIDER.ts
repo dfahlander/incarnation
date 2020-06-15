@@ -1,1 +1,1 @@
-export const PROVIDER = Symbol("provider");
+export const PROVIDER = Symbol("PROVIDER");
