@@ -118,6 +118,37 @@ export function createBoundClass<T>(Class: Class<T>, ctx: Context): Class<T> {
   return rv;
 }
 
+/** ConstructionContext
+ *
+ * Used together with the State function/class to initialize stateful
+ * services. As it is built now, stateful properties can also be put in private fields.
+ * See also State.ts.
+ */
+export interface ConstructionContext {
+  Type: Class;
+  pos: number;
+  values: any[];
+}
+const getConstructionContext = refDeterministic(
+  (Type: Class) => ({ Type, pos: 0, values: [] } as ConstructionContext)
+);
+export let ConstructionContext: ConstructionContext | null = null;
+
+export function construct(Type: Class, ctx: Context) {
+  const cctx = getConstructionContext(Type);
+  cctx.pos = 0;
+  const prevCtx = current,
+    prevCctx = ConstructionContext;
+  try {
+    current = ctx;
+    ConstructionContext = cctx;
+    return new Type();
+  } finally {
+    current = prevCtx;
+    ConstructionContext = prevCctx;
+  }
+}
+
 export function runInContext<FN extends () => any>(
   fn: FN,
   ctx: Context

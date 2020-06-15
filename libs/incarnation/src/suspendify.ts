@@ -6,6 +6,13 @@ import { ActiveQuery } from "./ActiveQuery";
 import { ActiveQueries } from "./ActiveQueries";
 import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
 import { Context } from "./Context";
+import { Topic } from "./Topic";
+import {
+  MutationQueue,
+  ResultReducerSet,
+  GetResultReducers,
+} from "./DataStoreTypes";
+import { OptimisticUpdater } from "./OptimisticUpdater";
 
 let currentAction: null | ActionState = null;
 interface ActionState {
@@ -14,32 +21,39 @@ interface ActionState {
   subAction: null | ActionState;
 }
 
-export function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
+/*export function getActiveQueries<T extends IsAdaptive, TProp extends keyof T>(
+  obj: T,
+  propName: TProp
+): T[TProp] extends (...args: infer TArgs) => infer TResult
+  ? ActiveQueries<T[TProp], TArgs, TResult> | null
+  : null {
+  return obj?.$flavors?.suspense?.[propName as any]?.$queries ?? null;
+}*/
+
+export function suspendifyMethodOrGetter(
+  fn: (...args: any[]) => any,
+  muts?: MutationQueue,
+  getReducers?: GetResultReducers
+) {
   let bypass = false;
-  const activeQueries = (run.$queries = new WeakMap<
-    any,
-    ActiveQueries<any, any, any>
-  >());
+  const activeQueries = (run.$queries = new ActiveQueries());
 
   function run(...args: any[]) {
-    if (Context.current === Context.root) return rootGuard(this, args);
+    if (Context.current === Context.root) return rootGuard(this, args); // this could equally well be null
     if (currentAction) return runImperativeAction(currentAction, this, args);
     if (bypass) return suspendifyIfAdaptive(fn.apply(this, args));
-    const queries: ActiveQueries =
-      activeQueries.get(this) ||
-      activeQueries.set(this, new ActiveQueries()).get(this)!;
+    const queries: ActiveQueries = activeQueries;
 
     const { firstQuery } = queries;
 
     const query = firstQuery && findQuery(firstQuery, args, firstQuery.prev);
     if (query) {
       if (CurrentExecution.current) {
-        CurrentExecution.current.queries.push(query);
+        CurrentExecution.current.topics.push(query.topic);
       }
-      const { hasResult, result } = query;
       // If we've ever got a result, return it here:
       // This holds true also if a refresh is happening, or if a refresh resulted in an error.
-      if (hasResult) return result;
+      if (query.hasResult) return muts ? query.result : query.reducedResult();
       if (query.promise) throw query.promise;
       throw query.error;
     }
@@ -54,30 +68,15 @@ export function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
     }
 
     // Handle returned promise
-    const promise = Promise.resolve(result)
-      .then(
-        (result: any) => {
-          newQuery.hasResult = true;
-          newQuery.result = suspendifyIfAdaptive(result);
-          newQuery.promise = null;
-          newQuery.error = null;
-          newQuery.isLoading = false;
-          // No need to notify(). When this promise resolves, the system will call us again and get the cached value.
-          return newQuery.result;
-        },
-        (error: any) => {
-          newQuery.promise = null;
-          newQuery.error = error;
-          newQuery.isLoading = false;
-          return Promise.reject(error);
-        }
-      )
-      .finally(() => {
-        // Schedule a cleanup in case no one subscribes to the query.
-        queries.startManagingCleanup(newQuery);
-      });
-
-    const newQuery = new ActiveQuery(this, fn, args, promise);
+    const promise = Promise.resolve(result).then(suspendifyIfAdaptive);
+    const newQuery = new ActiveQuery(
+      this,
+      fn,
+      args,
+      promise,
+      muts,
+      getReducers?.(args)
+    );
 
     if (firstQuery) {
       newQuery.prev = firstQuery.prev; // Connect new node to last node
@@ -87,7 +86,9 @@ export function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
       // Circular linked list is empty. Create first node:
       queries.firstQuery = newQuery;
     }
-    throw promise; // Suspend
+    newQuery.promise!.finally(() => queries.startManagingCleanup(newQuery));
+    // Suspend:
+    throw newQuery.promise;
   }
 
   function runImperativeAction(action: ActionState, thiz: any, args: any[]) {
@@ -125,6 +126,7 @@ export function suspendifyMethodOrGetter(fn: (...args: any[]) => any) {
   }
 
   function rootGuard(thiz: any, args: any[]) {
+    // thiz not needed? backend fn is bound anyway?
     const action: ActionState = {
       results: [],
       pointer: 0,
@@ -164,7 +166,7 @@ export function suspendify<T extends IsAdaptive>(obj: T): Suspendified<T> {
   if (!suspendified) {
     const suspendifyingProps = getWrappedProps(
       obj.$flavors.orig,
-      (origFn) => suspendifyMethodOrGetter(origFn),
+      (origFn, propName) => suspendifyMethodOrGetter(origFn),
       true
     );
     suspendified = Object.create(obj, suspendifyingProps) as Suspendified<T>;
