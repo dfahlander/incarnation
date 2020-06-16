@@ -52,13 +52,14 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
     const { queued, beingSent, topic, rev } = muts;
     if (rev !== this.rev) {
       // Need to update reduced result
-      invalidate.invalid = false;
+      invalidate.invalid = false; // Reset flag before calling reducers
       this._reducedResult = reduceResult(
         reduceResult(this._reducedResult, reducers, queued),
         reducers,
         beingSent
       );
       if (invalidate.invalid) {
+        // A reducer invalidated the result. Refresh is needed.
         this.refresh();
       }
       this.rev = rev;
