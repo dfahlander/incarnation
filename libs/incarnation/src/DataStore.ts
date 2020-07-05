@@ -18,17 +18,15 @@ import { MutationQueue } from "./MutationQueue";
 import { reduceResult } from "./utils/reduceResult";
 import { invalidate } from "./invalidate";
 
-export abstract class DataStore<
-  TMutation extends { type: string } = { type: string }
-> {
+export abstract class DataStore {
   static get [PROVIDER](): ProviderFn {
     return createDataStoreProvider(this as any);
   }
   readonly $flavors: DataStoreFlavor<this>;
-  abstract mutate(mutations: TMutation[]): Promise<PromiseSettledResult<any>[]>;
+  abstract mutate(mutations: Mutation[]): Promise<PromiseSettledResult<any>[]>;
 }
 
-function suspendifyDataStore<T extends DataStore<any>>(ds: T) {
+function suspendifyDataStore(ds: DataStore) {
   const suspendifyingProps = getWrappedProps(
     ds,
     (fn, propName, type) =>
@@ -41,10 +39,10 @@ function suspendifyDataStore<T extends DataStore<any>>(ds: T) {
           ),
     true
   );
-  return Object.create(ds, suspendifyingProps) as Suspendified<T>;
+  return Object.create(ds, suspendifyingProps) as Suspendified<DataStore>;
 }
 
-interface InternalDataStore extends DataStore<any> {
+interface InternalDataStore extends DataStore {
   $mque: MutationQueue;
   $optimisticUpdater: OptimisticUpdater;
   //$mutationMerger: MutationMerger; // Unmark when we have that type. Use it from suspendifyMutate.
@@ -81,7 +79,7 @@ type DataStoreFlavor<T> = {
 type SuspendifiedDataStore<T> = Suspendified<T>; // Could do something special if want mutate return void.
 
 function _createDataStoreProvider(
-  ConcreteDataStore: Class<DataStore<any>>
+  ConcreteDataStore: Class<DataStore>
 ): ProviderFn {
   return (next) => (_, WantedClass) => {
     return next(
@@ -176,15 +174,3 @@ function createDataStoreClass(
 
   return WrappedDataStore;
 }
-
-/*
-class Apa extends DataStore<{ type: string }> {
-  async mutate(mutations: { type: string }[]) {
-    return [2];
-  }
-}
-import { use } from "./use";
-import { include } from "./include";
-use(Apa).mutate([]);
-include(Apa).mutate([]);
-*/
