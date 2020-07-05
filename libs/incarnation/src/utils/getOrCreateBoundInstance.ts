@@ -23,7 +23,9 @@ function _getOrCreateBoundInstance(ctx: Context, Class: AbstractClass) {
   // Resolve class
   const ConcreteClass = resolveClass(ctx, Class);
   const instance = construct(ConcreteClass, ctx);
-  instance.$flavors = { orig: instance, promise: null, suspense: null };
+  if (!instance.$flavors) {
+    instance.$flavors = { orig: instance, promise: null, suspense: null };
+  }
   instance[IsLazy] = true;
   const wrappedProps = getWrappedProps(
     instance,

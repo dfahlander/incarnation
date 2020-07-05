@@ -7,12 +7,9 @@ import { ActiveQueries } from "./ActiveQueries";
 import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
 import { Context } from "./Context";
 import { Topic } from "./Topic";
-import {
-  MutationQueue,
-  ResultReducerSet,
-  GetResultReducers,
-} from "./DataStoreTypes";
+import { ResultReducerSet, GetResultReducers } from "./DataStoreTypes";
 import { OptimisticUpdater } from "./OptimisticUpdater";
+import { MutationQueue } from "./MutationQueue";
 
 let currentAction: null | ActionState = null;
 interface ActionState {
@@ -21,14 +18,14 @@ interface ActionState {
   subAction: null | ActionState;
 }
 
-/*export function getActiveQueries<T extends IsAdaptive, TProp extends keyof T>(
+export function getActiveQueries<T extends IsAdaptive, TProp extends keyof T>(
   obj: T,
   propName: TProp
 ): T[TProp] extends (...args: infer TArgs) => infer TResult
   ? ActiveQueries<T[TProp], TArgs, TResult> | null
   : null {
   return obj?.$flavors?.suspense?.[propName as any]?.$queries ?? null;
-}*/
+}
 
 export function suspendifyMethodOrGetter(
   fn: (...args: any[]) => any,
