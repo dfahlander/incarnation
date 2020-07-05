@@ -10,9 +10,9 @@ type OptimisticReducerSpec<TMutation extends { type: string }, R> = {
   ) => R;
 };
 
-export type OptimisticUpdater<
-  T extends DataStore = DataStore
-> = T extends DataStore<infer TMutation>
+export type OptimisticUpdater<T extends DataStore = DataStore> = T extends {
+  mutate(mutations: Array<infer TMutation>): Promise<any>;
+}
   ? TMutation extends { type: string }
     ? {
         [P in Exclude<keyof T, keyof DataStore>]?: T[P] extends (

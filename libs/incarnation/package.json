@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "test:debug": "echo Open chrome://inspect and click DevTools link && node --inspect ../../node_modules/.bin/jest --runInBand",
-    "build": "tsc"
+    "build": "tsc",
+    "clean": "rm -rf dist/ && rm -rf *.tsbuildinfo"
   },
   "repository": {
     "type": "git",
