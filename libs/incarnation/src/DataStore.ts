@@ -135,9 +135,6 @@ function createDataStoreClass(
       res: PromiseSettledResult<any>[],
       mutations: Mutation[]
     ) {
-      const successfulMutations = mutations.filter(
-        (m, i) => res[i].status === "fulfilled"
-      );
       for (const propName of queryMethodPropNames) {
         const activeQueries = getActiveQueries(this as any, propName);
         if (activeQueries) {
@@ -152,7 +149,8 @@ function createDataStoreClass(
               const newResult = reduceResult(
                 query.result,
                 query.reducers,
-                successfulMutations
+                mutations,
+                res
               );
               query.setResult(newResult); // Set it regardless of invalid flag. It may partially have been reduced.
               if (invalidate.invalid) {
