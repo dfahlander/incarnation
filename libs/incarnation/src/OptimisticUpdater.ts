@@ -5,8 +5,9 @@ import { getSpecificGenericType } from "./utils/getSpecificGenericType";
 
 type OptimisticReducerSpec<TMutation extends { type: string }, R> = {
   [MutationTypeString in TMutation["type"]]?: (
-    result: R,
-    op: TMutation extends { type: MutationTypeString } ? TMutation : never
+    prev: R,
+    op: TMutation extends { type: MutationTypeString } ? TMutation : never,
+    opResult?: any
   ) => R;
 };
 
