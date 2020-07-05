@@ -1,7 +1,9 @@
 import { Topic } from "./Topic";
-import { MutationQueue, ResultReducerSet, Mutation } from "./DataStoreTypes";
+import { ResultReducerSet, Mutation } from "./DataStoreTypes";
 import { CurrentExecution } from "./CurrentExecution";
 import { invalidate } from "./invalidate";
+import { MutationQueue } from "./MutationQueue";
+import { reduceResult } from "./utils/reduceResult";
 
 export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   fn: (...args: TArgs) => Promise<TResult>;
@@ -93,22 +95,24 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       }
       return;
     }
+    // Cannot be promise from here.
+    const result = resultOrPromise;
     if (
       !this.hasResult ||
-      this.result !== resultOrPromise ||
+      this.result !== result ||
       this.error ||
       this.isLoading
     ) {
       this.promise = null;
       this.hasResult = true;
-      this.result = resultOrPromise;
+      this.result = result;
       this._reducedResult = null;
       this.rev = -1;
       this.error = null;
       this.isLoading = false;
       this.topic.notify();
     }
-    return resultOrPromise;
+    return result;
   }
 
   setError(error: any) {
@@ -126,17 +130,4 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       this.setResult(this.fn.apply(this.instance, this.args));
     }
   }
-}
-
-function reduceResult(
-  result: any,
-  reducers: ResultReducerSet | undefined,
-  mutations: Mutation[]
-) {
-  if (!reducers) return invalidate(result);
-  for (const m of mutations) {
-    const reducer = reducers[m.type];
-    result = reducer ? reducer(result, m) : invalidate(result);
-  }
-  return result;
 }

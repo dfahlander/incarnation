@@ -1,4 +1,8 @@
-import { suspendify, suspendifyMethodOrGetter } from "./suspendify";
+import {
+  suspendify,
+  suspendifyMethodOrGetter,
+  getActiveQueries,
+} from "./suspendify";
 import { Suspendified } from "./Suspendified";
 import { PROVIDER } from "./symbols/PROVIDER";
 import { ProviderFn } from "./Provider";
@@ -8,8 +12,11 @@ import { getWrappedProps } from "./utils/getWrappedProps";
 import { getEffectiveProps } from "./utils/getEffectiveProps";
 import { State, Const } from "./State";
 import { OptimisticUpdater } from "./OptimisticUpdater";
-import { MutationQueue } from "./DataStoreTypes";
+import { Mutation } from "./DataStoreTypes";
 import { Topic } from "./Topic";
+import { MutationQueue } from "./MutationQueue";
+import { reduceResult } from "./utils/reduceResult";
+import { invalidate } from "./invalidate";
 
 export abstract class DataStore<
   TMutation extends { type: string } = { type: string }
@@ -21,22 +28,16 @@ export abstract class DataStore<
   abstract mutate(mutations: TMutation[]): Promise<PromiseSettledResult<any>[]>;
 }
 
-function suspendifyDataStore<T extends DataStore<any>>(
-  ds: T,
-  Interface: AbstractClass<DataStore>,
-  ConcreteDataStore: Class<DataStore>
-) {
+function suspendifyDataStore<T extends DataStore<any>>(ds: T) {
   const suspendifyingProps = getWrappedProps(
     ds,
     (fn, propName, type) =>
       propName === "mutate"
-        ? suspendifyMethodOrGetter(fn) // Could do something special here if want to return void.
+        ? suspendifyMutate((ds as unknown) as InternalDataStore)
         : suspendifyQueryMethod(
             fn,
             propName,
-            (ds as unknown) as InternalDataStore,
-            Interface,
-            ConcreteDataStore
+            (ds as unknown) as InternalDataStore
           ),
     true
   );
@@ -45,27 +46,30 @@ function suspendifyDataStore<T extends DataStore<any>>(
 
 interface InternalDataStore extends DataStore<any> {
   $mque: MutationQueue;
+  $optimisticUpdater: OptimisticUpdater;
+  //$mutationMerger: MutationMerger; // Unmark when we have that type. Use it from suspendifyMutate.
+}
+
+function suspendifyMutate(
+  //  mutate: (mutations: any[]) => Promise<PromiseSettledResult<any>>,
+  ds: InternalDataStore
+) {
+  const { $mque } = ds;
+  return function (mutations: any[]) {
+    $mque.add(mutations);
+  };
 }
 
 function suspendifyQueryMethod(
-  fn,
+  fn: (...args: any[]) => any,
   propName: string,
-  ds: InternalDataStore,
-  Interface: AbstractClass<DataStore>,
-  ConcreteDataStore: Class<DataStore>
+  ds: InternalDataStore
 ) {
-  const optimisticUpdater = OptimisticUpdater(Interface); // TODO: Make sure we are in the right context. See comments in use.ts
-  return suspendifyMethodOrGetter(fn, ds.$mque, optimisticUpdater[propName]);
-  /*const queries = suspFn.$queries;
-  // TODO: memify the function so it doesnt have to compute the reduction every time.
-  // NO: This is being handled within suspendifyMethodOrGetter!
-  const mutationReducer = function (...args: any[]) {
-    const result = suspFn.apply(this, args); // TODO: this could equally well be null?
-    const [reducedResult, invalid] = reduce(result);
-    if (invalid) 
-  };
-  return mutationReducer;
-  */
+  return suspendifyMethodOrGetter(
+    fn,
+    ds.$mque,
+    ds.$optimisticUpdater?.[propName]
+  );
 }
 
 type DataStoreFlavor<T> = {
@@ -91,13 +95,6 @@ function _createDataStoreProvider(
 }
 const createDataStoreProvider = refDeterministic(_createDataStoreProvider);
 
-function getEmptyArray(): any[] {
-  return [];
-}
-function getFalse() {
-  return false;
-}
-
 function createDataStoreClass(
   ConcreteDataStore: Class,
   Interface: AbstractClass
@@ -116,11 +113,12 @@ function createDataStoreClass(
 
   class WrappedDataStore extends (ConcreteDataStore as new () => DataStore)
     implements InternalDataStore {
-    $mque = Const(() => ({
-      beingSent: [],
-      queued: [],
-      topic: new Topic(),
-    }));
+    $mque = MutationQueue(
+      // @ts-ignore (TS believes super.mutate is abstract, but it is not.)
+      super.mutate.bind(this),
+      this.$$applyMutateResponse.bind(this)
+    );
+    $optimisticUpdater = OptimisticUpdater(Interface);
 
     private $$flavors: any;
 
@@ -128,39 +126,50 @@ function createDataStoreClass(
       return (
         this.$$flavors ||
         (this.$$flavors = {
-          suspense: suspendifyDataStore(this, Interface, ConcreteDataStore),
+          suspense: suspendifyDataStore(this),
           orig: this,
           promise: this,
         })
       );
     }
 
-    /*$$flush() {
-      const {$mque} = this;
-      $mque.beingSent = $mque.beingSent.concat($mque.queued);
-      $mque.queued = [];
-
-      // Todo: Try finding an OptimisticUpdater(Interface)
+    private $$applyMutateResponse(
+      res: PromiseSettledResult<any>[],
+      mutations: Mutation[]
+    ) {
+      const successfulMutations = mutations.filter(
+        (m, i) => res[i].status === "fulfilled"
+      );
       for (const propName of queryMethodPropNames) {
         const activeQueries = getActiveQueries(this as any, propName);
         if (activeQueries) {
           for (const query of activeQueries) {
-            query.refresh(); // This is the default unless specified by optimisticupdater
+            if (!query.hasResult) {
+              // A query may be ongoing. Need to resend it after mutations have been made.
+              query.refresh();
+            } else {
+              // Reset static "invalid" flag. It can be set by reducers in case they are
+              // unable to reduce an optimistic result.
+              invalidate.invalid = false;
+              const newResult = reduceResult(
+                query.result,
+                query.reducers,
+                successfulMutations
+              );
+              query.setResult(newResult); // Set it regardless of invalid flag. It may partially have been reduced.
+              if (invalidate.invalid) {
+                query.refresh();
+              }
+            }
           }
         }
       }
-    }*/
+    }
 
-    mutate(mutations: any[]): any {
+    async mutate(mutations: Mutation[]) {
       // @ts-ignore
-      const res = super.mutate(mutations);
-      if (res && typeof res.then === "function") {
-        return res.then((res: any[]) => {
-          this.$$applyMutations(mutations);
-          return res;
-        });
-      }
-      this.$$applyMutations(mutations);
+      const res = await super.mutate(mutations);
+      this.$$applyMutateResponse(res, mutations);
       return res;
     }
   }

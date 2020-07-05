@@ -13,25 +13,28 @@ describe("DataStore", () => {
         type: "clear";
       };
 
-  abstract class KeyValueStore extends DataStore<KeyValueMutation> {
-    abstract async get(key: any): Promise<any>;
-    abstract async count(): Promise<number>;
+  abstract class KeyValueStore extends DataStore {
+    abstract get(key: any): Promise<any>;
+    abstract count(): Promise<number>;
+    abstract mutate(
+      mutations: KeyValueMutation[]
+    ): Promise<PromiseSettledResult<any>[]>;
   }
 
   class MyService {
-    store = use(KeyValueStore);
-    get(key: string): string {
-      const result = this.store.get(key) as string;
-      return result + " from MyService";
+    store = include(KeyValueStore);
+    async get(key: string): Promise<string> {
+      const result = await this.store.get(key);
+      return result ? result + " from MyService" : result;
     }
-    set(key: string, value: string) {
-      this.store.mutate([{ type: "set", key, value }]);
+    async set(key: string, value: string) {
+      await this.store.mutate([{ type: "set", key, value }]);
     }
-    clear() {
-      this.store.mutate([{ type: "clear" }]);
+    async clear() {
+      await this.store.mutate([{ type: "clear" }]);
     }
-    count() {
-      return this.store.count() + 1;
+    async count() {
+      return (await this.store.count()) + 1;
     }
   }
 
@@ -53,6 +56,7 @@ describe("DataStore", () => {
           map.set(m.key, m.value);
         }
       }
+      return await Promise.allSettled(mutations.map((m) => null));
     }
   }
 

@@ -46,6 +46,7 @@ export function OptimisticUpdater(DataStoreClass, declaration?) {
   return RClass;
 }
 
+/*
 //
 // Below is just type-testing:
 //
@@ -78,6 +79,8 @@ class MyDataStore extends DataStore {
 const opu = OptimisticUpdater(MyDataStore);
 const opuHej = opu.count!("hej");
 
+import { invalidate } from "./invalidate";
+
 export const DBStoreOU = OptimisticUpdater(MyDataStore, {
   query: (name, number) => ({
     boll: (result, op) => [""],
@@ -107,3 +110,4 @@ export const DBStoreOU = OptimisticUpdater(MyDataStore, {
     };
   },
 });
+*/
