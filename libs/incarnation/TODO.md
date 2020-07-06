@@ -7,11 +7,12 @@
 
 # Observables
 
-[ ] reactive(instance, Observable)
-[ ] DataStore
+[X] DataStore
 [X] context.queries
 [X] use()
-[ ] QueryReducer
+[X] QueryReducer
+[X] Test suspense version of DataStore
+[ ] Correct typings for mutate in suspense version of DataStore.
 [ ] MutationMerger
 
 # React integration

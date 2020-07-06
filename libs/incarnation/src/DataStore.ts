@@ -2,6 +2,8 @@ import {
   suspendify,
   suspendifyMethodOrGetter,
   getActiveQueries,
+  runImperativeAction,
+  currentAction,
 } from "./suspendify";
 import { Suspendified } from "./Suspendified";
 import { PROVIDER } from "./symbols/PROVIDER";
@@ -54,7 +56,17 @@ function suspendifyMutate(
 ) {
   const { $mque } = ds;
   return function (mutations: any[]) {
-    $mque.add(mutations);
+    if (currentAction) {
+      return runImperativeAction(
+        currentAction,
+        ds,
+        [mutations],
+        $mque.add, // add never touches `this` so don't have to be bound.
+        $mque
+      );
+    } else {
+      $mque.add(mutations);
+    }
   };
 }
 
@@ -135,6 +147,12 @@ function createDataStoreClass(
       res: PromiseSettledResult<any>[],
       mutations: Mutation[]
     ) {
+      const successfulMutations = mutations.filter(
+        (m, i) => res[i].status === "fulfilled"
+      );
+      const mutationResults = (res.filter(
+        (r) => r.status === "fulfilled"
+      ) as PromiseFulfilledResult<any>[]).map((r) => r.value);
       for (const propName of queryMethodPropNames) {
         const activeQueries = getActiveQueries(this as any, propName);
         if (activeQueries) {
@@ -149,8 +167,8 @@ function createDataStoreClass(
               const newResult = reduceResult(
                 query.result,
                 query.reducers,
-                mutations,
-                res
+                successfulMutations,
+                mutationResults
               );
               query.setResult(newResult); // Set it regardless of invalid flag. It may partially have been reduced.
               if (invalidate.invalid) {

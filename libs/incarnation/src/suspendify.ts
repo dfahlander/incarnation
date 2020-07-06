@@ -11,7 +11,7 @@ import { ResultReducerSet, GetResultReducers } from "./DataStoreTypes";
 import { OptimisticUpdater } from "./OptimisticUpdater";
 import { MutationQueue } from "./MutationQueue";
 
-let currentAction: null | ActionState = null;
+export let currentAction: null | ActionState = null;
 interface ActionState {
   pointer: number;
   results: { result: any; fn: Function; args: any[] }[];
@@ -36,8 +36,9 @@ export function suspendifyMethodOrGetter(
   const activeQueries = (run.$queries = new ActiveQueries());
 
   function run(...args: any[]) {
-    if (Context.current === Context.root) return rootGuard(this, args); // this could equally well be null
-    if (currentAction) return runImperativeAction(currentAction, this, args);
+    if (Context.current === Context.root) return rootGuard(this, args, fn); // this could equally well be null
+    if (currentAction)
+      return runImperativeAction(currentAction, this, args, fn, muts);
     if (bypass) return suspendifyIfAdaptive(fn.apply(this, args));
     const queries: ActiveQueries = activeQueries;
 
@@ -87,68 +88,76 @@ export function suspendifyMethodOrGetter(
     // Suspend:
     throw newQuery.promise;
   }
-
-  function runImperativeAction(action: ActionState, thiz: any, args: any[]) {
-    if (action.pointer < action.results.length) {
-      const memorizedResult = action.results[action.pointer++];
-      if (memorizedResult.fn !== fn) {
-        throw new Error(`Non-deterministic code path`);
-      } else if (!deepEqualsImmutable(memorizedResult.args, args)) {
-        throw new Error(`Non-repeatable arguments`);
-      }
-      return memorizedResult.result;
-    }
-    currentAction =
-      action.subAction ||
-      (action.subAction = { results: [], pointer: 0, subAction: null });
-    action.subAction.pointer = 0;
-    try {
-      const result = suspendifyIfAdaptive(fn.apply(thiz, args));
-      if (!result || typeof result.then !== "function") {
-        action.results.push({ result, fn, args });
-        action.pointer++;
-        action.subAction.results = [];
-        action.subAction.pointer = 0;
-        return result;
-      }
-      // Handle returned promise
-      throw Promise.resolve(result).then((result: any) => {
-        action.results.push({ result, fn, args });
-        action.pointer++;
-        action.subAction = null;
-      });
-    } finally {
-      currentAction = action;
-    }
-  }
-
-  function rootGuard(thiz: any, args: any[]) {
-    // thiz not needed? backend fn is bound anyway?
-    const action: ActionState = {
-      results: [],
-      pointer: 0,
-      subAction: null,
-    };
-    return rerun(action);
-
-    function rerun(action: ActionState) {
-      currentAction = action;
-      try {
-        action.pointer = 0;
-        return fn.apply(thiz, args);
-      } catch (something) {
-        if (something && typeof something.then === "function") {
-          return Promise.resolve(something).then(() => rerun(action));
-        } else {
-          throw something;
-        }
-      } finally {
-        currentAction = null;
-      }
-    }
-  }
-
   return run;
+}
+
+export function runImperativeAction(
+  action: ActionState,
+  thiz: any,
+  args: any[],
+  fn: (...args: any[]) => any,
+  muts?: MutationQueue
+) {
+  if (action.pointer < action.results.length) {
+    const memorizedResult = action.results[action.pointer++];
+    if (memorizedResult.fn !== fn) {
+      throw new Error(`Non-deterministic code path`);
+    } else if (!deepEqualsImmutable(memorizedResult.args, args)) {
+      throw new Error(`Non-repeatable arguments`);
+    }
+    return memorizedResult.result;
+  }
+  currentAction =
+    action.subAction ||
+    (action.subAction = { results: [], pointer: 0, subAction: null });
+  action.subAction.pointer = 0;
+  try {
+    const result = muts
+      ? // If muts was given, caller is a query method
+        muts.flush().then(() => fn.apply(thiz, args))
+      : suspendifyIfAdaptive(fn.apply(thiz, args));
+    if (!result || typeof result.then !== "function") {
+      action.results.push({ result, fn, args });
+      action.pointer++;
+      action.subAction.results = [];
+      action.subAction.pointer = 0;
+      return result;
+    }
+    // Handle returned promise
+    throw Promise.resolve(result).then((result: any) => {
+      action.results.push({ result, fn, args });
+      action.pointer++;
+      action.subAction = null;
+    });
+  } finally {
+    currentAction = action;
+  }
+}
+
+function rootGuard(thiz: any, args: any[], fn: (...args: any[]) => any) {
+  // thiz not needed? backend fn is bound anyway?
+  const action: ActionState = {
+    results: [],
+    pointer: 0,
+    subAction: null,
+  };
+  return rerun(action);
+
+  function rerun(action: ActionState) {
+    currentAction = action;
+    try {
+      action.pointer = 0;
+      return fn.apply(thiz, args);
+    } catch (something) {
+      if (something && typeof something.then === "function") {
+        return Promise.resolve(something).then(() => rerun(action));
+      } else {
+        throw something;
+      }
+    } finally {
+      currentAction = null;
+    }
+  }
 }
 
 function suspendifyIfAdaptive(value: any) {
