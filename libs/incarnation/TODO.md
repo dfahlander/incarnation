@@ -5,6 +5,11 @@
 [X] Hantera Middleware mot abstrakt klass
 [X] Optimera runInContext() -> bindToContext()
 
+# React integration
+
+[ ] Läs på hur man testar reactkomponenter med jest - ändrat output givet viss action.
+[ ] incarnation-react
+
 # Observables
 
 [X] DataStore
@@ -12,11 +17,7 @@
 [X] use()
 [X] QueryReducer
 [X] Test suspense version of DataStore
-[ ] Make use() be treated as imperative if called from included service.
+[X] Make use() be treated as imperative if called from included service.
 [ ] Correct typings for mutate in suspense version of DataStore.
-([ ] MutationMerger)
-
-# React integration
-
-[ ] Läs på hur man testar reactkomponenter med jest - ändrat output givet viss action.
-[ ] incarnation-react
+[ ] Test reactive use of DataStore through react integration.
+[ ] MutationMerger

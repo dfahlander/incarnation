@@ -61,8 +61,8 @@ function suspendifyMutate(
         currentAction,
         ds,
         [mutations],
-        $mque.add, // add never touches `this` so don't have to be bound.
-        $mque
+        $mque.add // add never touches `this` so don't have to be bound.
+        // Don't provide $mgue as muts because it would make runImperativeAction believe we are a query method.
       );
     } else {
       $mque.add(mutations);

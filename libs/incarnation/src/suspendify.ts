@@ -12,7 +12,7 @@ import { OptimisticUpdater } from "./OptimisticUpdater";
 import { MutationQueue } from "./MutationQueue";
 
 export let currentAction: null | ActionState = null;
-interface ActionState {
+export interface ActionState {
   pointer: number;
   results: { result: any; fn: Function; args: any[] }[];
   subAction: null | ActionState;
@@ -103,6 +103,7 @@ export function runImperativeAction(
   fn: (...args: any[]) => any,
   muts?: MutationQueue
 ) {
+  if (fn.name === "add") debugger;
   if (action.pointer < action.results.length) {
     const memorizedResult = action.results[action.pointer++];
     if (memorizedResult.fn !== fn) {
@@ -119,7 +120,7 @@ export function runImperativeAction(
   try {
     const result = muts
       ? // If muts was given, they need to be flushed before the query can take place
-        muts.flush().then(() => fn.apply(thiz, args))
+        muts.flush().then(() => suspendifyIfAdaptive(fn.apply(thiz, args)))
       : suspendifyIfAdaptive(fn.apply(thiz, args));
     if (!result || typeof result.then !== "function") {
       action.results.push({ result, fn, args });
@@ -139,7 +140,7 @@ export function runImperativeAction(
   }
 }
 
-function rootGuard(thiz: any, args: any[], fn: (...args: any[]) => any) {
+export function rootGuard(thiz: any, args: any[], fn: (...args: any[]) => any) {
   // thiz not needed? backend fn is bound anyway?
   const action: ActionState = {
     results: [],
@@ -163,6 +164,10 @@ function rootGuard(thiz: any, args: any[], fn: (...args: any[]) => any) {
       currentAction = null;
     }
   }
+}
+
+export function setCurrentAction(action: ActionState | null) {
+  currentAction = action;
 }
 
 function suspendifyIfAdaptive(value: any) {
