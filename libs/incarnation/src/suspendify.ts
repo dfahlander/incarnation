@@ -51,12 +51,17 @@ export function suspendifyMethodOrGetter(
       }
       // If we've ever got a result, return it here:
       // This holds true also if a refresh is happening, or if a refresh resulted in an error.
-      if (query.hasResult) return muts ? query.result : query.reducedResult();
+      if (query.hasResult) return query.reducedResult();
       if (query.promise) throw query.promise;
       throw query.error;
     }
     // Not cached. Call method to get it:
     const result = fn.apply(this, args);
+    /*const result = muts
+      ? // If muts was given, they need to be flushed before the query can take place
+        muts.flush().then(() => fn.apply(this, args))
+      : fn.apply(this, args);*/
+
     if (!result || typeof result.then !== "function") {
       // If the method, getter or setter ever returns a non-promise,
       // assume it will never in the future return a promise.
@@ -113,7 +118,7 @@ export function runImperativeAction(
   action.subAction.pointer = 0;
   try {
     const result = muts
-      ? // If muts was given, caller is a query method
+      ? // If muts was given, they need to be flushed before the query can take place
         muts.flush().then(() => fn.apply(thiz, args))
       : suspendifyIfAdaptive(fn.apply(thiz, args));
     if (!result || typeof result.then !== "function") {

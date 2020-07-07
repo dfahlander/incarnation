@@ -56,7 +56,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       // Need to update reduced result
       invalidate.invalid = false; // Reset flag before calling reducers
       this._reducedResult = reduceResult(
-        reduceResult(this._reducedResult, reducers, queued),
+        reduceResult(this.result, reducers, queued),
         reducers,
         beingSent
       );
