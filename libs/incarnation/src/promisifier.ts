@@ -3,14 +3,36 @@ import { IsAdaptive } from "./IsAdaptive";
 import { getWrappedProps } from "./utils/getWrappedProps";
 import { Promisified } from "./Promisified";
 import { Context, bindToContext } from "./Context";
+import {
+  setCurrentAction,
+  ActionState,
+  currentAction,
+  rootGuard,
+} from "./suspendify";
 
 export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
-  function run(...args: any[]) {
-    const runAgain = bindToContext(run, Context.current);
+  return function (...args: any[]) {
+    const rv = rootGuard(this, args, fn);
+    if (rv && rv[IsLazy]) {
+      return promisifyIfAdaptive(rv);
+    } else {
+      return Promise.resolve(rv).then(promisifyIfAdaptive);
+    }
+  };
+}
+/*export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
+  function preRun(...args: any[]) {
+    const parentAction = currentAction;
+    const rootAction: ActionState = {
+      results: [],
+      pointer: 0,
+      subAction: null,
+    };
+    //const runAgain = bindToContext(run, Context.current);
     const rerunWhenPromiseResolves = (thenable: PromiseLike<any>) =>
       thenable.then(
         () => {
-          return runAgain(...args);
+          return rerun();
         },
         (error) =>
           // Allow also async methods to call suspending apis
@@ -18,25 +40,31 @@ export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
             ? rerunWhenPromiseResolves(error)
             : Promise.reject(error)
       );
-
-    let rv;
-    try {
-      rv = fn.apply(this, args);
-    } catch (x) {
-      if (x && typeof x.then === "function") {
-        return rerunWhenPromiseResolves(x);
+    return rerun();
+    function rerun() {
+      let rv;
+      try {
+        setCurrentAction(rootAction);
+        rootAction.pointer = 0;
+        rv = fn.apply(this, args);
+      } catch (x) {
+        if (x && typeof x.then === "function") {
+          return rerunWhenPromiseResolves(x);
+        }
+        throw x;
+      } finally {
+        setCurrentAction(parentAction);
       }
-      throw x;
-    }
-    if (rv && rv[IsLazy]) {
-      return promisifyIfAdaptive(rv);
-    } else {
-      return Promise.resolve(rv).then(promisifyIfAdaptive);
+      if (rv && rv[IsLazy]) {
+        return promisifyIfAdaptive(rv);
+      } else {
+        return Promise.resolve(rv).then(promisifyIfAdaptive);
+      }
     }
   }
 
-  return run;
-}
+  return preRun;
+}*/
 
 export function promisifyIfAdaptive(value: any) {
   if (value && value.$flavors) {

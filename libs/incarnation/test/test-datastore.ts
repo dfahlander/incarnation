@@ -42,7 +42,8 @@ describe("DataStore", () => {
   const map = new Map();
   class MemKeyValueStore extends KeyValueStore {
     async get(key: any) {
-      return map.get(key);
+      const rv = map.get(key);
+      return rv;
     }
 
     async count() {
@@ -50,7 +51,6 @@ describe("DataStore", () => {
     }
 
     async mutate(mutations: KeyValueMutation[]) {
-      debugger;
       for (const m of mutations) {
         if (m.type === "clear") {
           map.clear();
@@ -81,7 +81,6 @@ describe("DataStore", () => {
       return result ? result + " from MyService" : result;
     }
     set(key: string, value: string) {
-      debugger;
       this.store.mutate([{ type: "set", key, value }]);
     }
     clear() {
@@ -122,5 +121,18 @@ describe("DataStore", () => {
       expect(svc.get("foo")).toBeUndefined();
       expect(svc.count()).toBe(1); // 0 + 1
     });
+  });
+
+  it("should be possible to use a suspense version of DataStore through a service", async () => {
+    const svc = include(SuspenseService, MemKeyValueStore);
+    svc.clear();
+    svc.set("foo", "bar");
+    const bar = await svc.get("foo");
+    expect(bar).toBe("bar from MyService");
+    const len = await svc.count();
+    expect(len).toBe(2); // 1 + 1
+    svc.clear();
+    expect(await svc.get("foo")).toBeUndefined();
+    expect(await svc.count()).toBe(1); // 0 + 1
   });
 });
