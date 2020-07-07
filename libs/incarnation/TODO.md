@@ -12,8 +12,9 @@
 [X] use()
 [X] QueryReducer
 [X] Test suspense version of DataStore
+[ ] Make use() be treated as imperative if called from included service.
 [ ] Correct typings for mutate in suspense version of DataStore.
-[ ] MutationMerger
+([ ] MutationMerger)
 
 # React integration
 

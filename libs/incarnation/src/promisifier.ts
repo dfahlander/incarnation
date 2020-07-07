@@ -10,7 +10,6 @@ export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
     const rerunWhenPromiseResolves = (thenable: PromiseLike<any>) =>
       thenable.then(
         () => {
-          debugger;
           return runAgain(...args);
         },
         (error) =>
