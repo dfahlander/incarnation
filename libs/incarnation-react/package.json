@@ -1,0 +1,32 @@
+{
+  "name": "incarnation-react",
+  "version": "0.0.1",
+  "description": "Use incarnation services from React",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest",
+    "test:debug": "echo Open chrome://inspect and click DevTools link && node --inspect ../../node_modules/.bin/jest --runInBand",
+    "build": "tsc --build",
+    "clean": "rm -rf dist/ && rm -rf *.tsbuildinfo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dfahlander/incarnation.git"
+  },
+  "keywords": [
+    "react",
+    "async",
+    "reactive",
+    "services",
+    "suspense"
+  ],
+  "author": "David Fahlander",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dfahlander/incarnation/issues"
+  },
+  "homepage": "https://github.com/dfahlander/incarnation#readme",
+  "dependencies": {
+    "incarnation": "^0.0.1"
+  }
+}
