@@ -149,14 +149,15 @@ export function construct(Type: Class, ctx: Context) {
   }
 }
 
-export function runInContext<FN extends () => any>(
+export function runInContext<FN extends (...args: any[]) => any>(
   fn: FN,
-  ctx: Context
+  ctx: Context,
+  ...args: any[]
 ): ReturnType<FN> {
   const prevCtx = current;
   try {
     current = ctx;
-    return fn();
+    return fn.apply(this, args);
   } finally {
     current = prevCtx;
   }
