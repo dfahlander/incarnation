@@ -8,7 +8,8 @@
 # React integration
 
 [ ] Läs på hur man testar reactkomponenter med jest - ändrat output givet viss action.
-[ ] incarnation-react
+[X] incarnation-react
+[ ] Testa bygga en app i react som använder DataStore och react-incarnation
 
 # Observables
 
