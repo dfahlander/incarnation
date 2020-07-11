@@ -22,3 +22,9 @@
 [ ] Correct typings for mutate in suspense version of DataStore.
 [ ] Test reactive use of DataStore through react integration.
 [ ] MutationMerger
+
+# Rearchitecture:
+
+[ ] Rename Topic to Signal
+[ ] Make Context live on globalThis
+[ ] Optimize or Marry CurrentExecution and Context.
