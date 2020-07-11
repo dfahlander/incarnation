@@ -57,11 +57,14 @@ export class Topic {
       const firstNode = lastSubscriber.next;
       let node = firstNode;
       do {
+        let next = node.next; // Pick it here in case node.notify() calls unsubscribe().
         try {
-          node.notify();
+          if (node.next)
+            // If !node.next, this node has unsubscribed already (llDelete nulls prev & next)
+            node.notify();
         } catch {}
-        node = node.next;
-      } while (node !== firstNode);
+        node = next;
+      } while (node && node !== firstNode);
     }
   }
 
