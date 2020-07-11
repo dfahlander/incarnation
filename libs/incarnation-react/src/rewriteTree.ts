@@ -1,6 +1,5 @@
 import React, {
   ReactNode,
-  createContext,
   useContext,
   ReactElement,
   Component,
@@ -138,7 +137,7 @@ function incarnatedClass(ClassComponent: { new (): Component }) {
   const rv = function Incarnated(props: any) {
     const ctx = useContext(IncarnationContext);
     const C = getRewrittenClassComponent(ClassComponent, ctx);
-    return <C {...props} />;
+    return React.createElement(C, props);
   };
   rv.$$incarnated = true;
   return rv;
