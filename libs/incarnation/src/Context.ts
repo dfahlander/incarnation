@@ -17,6 +17,10 @@ export interface StaticContext {
   readonly root: Context;
   readonly base: Context;
   readonly current: Context;
+  integrate(middleware: (fallbackGetter: () => Context) => () => Context): void;
+  unintegrate(
+    middleware: (fallbackGetter: () => Context) => () => Context
+  ): void;
 }
 
 const defaultClassMapper: ClassMapper = (requestedClass, mappedClass) =>
@@ -30,41 +34,66 @@ export const rootContext: Context = {
 
 export const baseContext = { ...rootContext };
 
-let current: Context = rootContext;
+let current: Context | null = null;
 
-export const Context = ((<T>(def: T) => {
-  return (value: T) => {
-    function CustomContext(alternateValue?: T) {
-      if (typeof this === "object") {
-        // Constructed by new()
-        // Caller is getOrCreateBoundInstance() from inject().
-        return value;
+export const Context =
+  globalThis._incarnationContext ||
+  (globalThis._incarnationContext = ((<T>(def: T) => {
+    return (value: T) => {
+      function CustomContext(alternateValue?: T) {
+        if (typeof this === "object") {
+          // Constructed by new()
+          // Caller is getOrCreateBoundInstance() from inject().
+          return value;
+        }
+        // Caller wants a provider that will map context to an alternate value
+        // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
+        // If so, return the cached CustomContext instead
+        const provider: ProviderFn = (next) => (
+          requestedClass,
+          mappedClass
+        ) => {
+          if (requestedClass === CustomContext)
+            return (function CustomContextValue() {
+              return alternateValue;
+            } as unknown) as Class;
+          return next(requestedClass, mappedClass);
+        };
+        return provider;
       }
-      // Caller wants a provider that will map context to an alternate value
-      // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
-      // If so, return the cached CustomContext instead
-      const provider: ProviderFn = (next) => (requestedClass, mappedClass) => {
-        if (requestedClass === CustomContext)
-          return (function CustomContextValue() {
-            return alternateValue;
-          } as unknown) as Class;
-        return next(requestedClass, mappedClass);
+      return (CustomContext as any) as {
+        (val: T): Provider;
+        new (): T;
       };
-      return provider;
-    }
-    return (CustomContext as any) as {
-      (val: T): Provider;
-      new (): T;
     };
-  };
-}) as unknown) as StaticContext;
+  }) as unknown) as StaticContext);
+
+const defaultFallbackGetter = () => rootContext;
+let getFallback = defaultFallbackGetter;
+let integrations: Array<(getFallback: () => Context) => () => Context> = [];
+
+function computeFallbackGetter() {
+  getFallback = integrations.reduce((p, c) => c(p), defaultFallbackGetter);
+}
 
 Object.defineProperties(Context, {
   root: { value: rootContext, writable: false },
   base: { value: baseContext, writable: false },
   current: {
     get() {
-      return current;
+      return current || getFallback();
+    },
+  },
+  integrate: {
+    value: (middleware: (fallbackGetter: () => Context) => () => Context) => {
+      integrations.push(middleware);
+      computeFallbackGetter();
+    },
+  },
+  unintegrate: {
+    value: (middleware: (fallbackGetter: () => Context) => () => Context) => {
+      integrations = integrations.filter((i) => i !== middleware);
+      computeFallbackGetter();
     },
   },
 });
