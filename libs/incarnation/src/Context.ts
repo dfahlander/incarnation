@@ -36,7 +36,7 @@ export const baseContext = { ...rootContext };
 
 let current: Context | null = null;
 
-export const Context =
+export const Context: StaticContext =
   globalThis._incarnationContext ||
   (globalThis._incarnationContext = ((<T>(def: T) => {
     return (value: T) => {

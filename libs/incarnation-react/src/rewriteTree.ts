@@ -1,6 +1,5 @@
 import React, {
   ReactNode,
-  useContext,
   ReactElement,
   Component,
   useState,
@@ -8,13 +7,11 @@ import React, {
 } from "react";
 import {
   refDeterministic,
-  runInContext,
-  Context,
   CurrentExecution,
   Execution,
   CircularLinkedSubscriber,
 } from "incarnation";
-import { IncarnationContext } from "./IncarnationContext";
+import { IncarnationReactContext } from "./IncarnationReactContext";
 
 export function rewriteTree(node: ReactNode): ReactNode {
   if (!node) return node;
@@ -47,7 +44,7 @@ const getMemoizedProxyComponent = refDeterministic(
     if (c.$$incarnated) return c;
     if (c.prototype && "isReactComponent" in c.prototype) {
       // Class component
-      return incarnatedClass(c as { new (): React.Component }); // for now.
+      return getRewrittenClassComponent(c as { new (): React.Component }); // for now.
     } else {
       // Function component
       return incarnated(c as (props: any) => ReactElement);
@@ -57,7 +54,6 @@ const getMemoizedProxyComponent = refDeterministic(
 
 function incarnated(FuncComponent: (props: any) => any) {
   const rv = function (props: any) {
-    const ctx = useContext(IncarnationContext);
     const [count, setCount] = useState(1);
     const parentExecution = CurrentExecution.current;
     const execution: Execution = { topics: [] };
@@ -70,7 +66,7 @@ function incarnated(FuncComponent: (props: any) => any) {
       return () => nodes.forEach((node) => node.topic.unsubscribe(node));
     });
     try {
-      const result = runInContext(FuncComponent, ctx, props);
+      const result = FuncComponent(props);
       return rewriteTree(result);
     } finally {
       CurrentExecution.current = parentExecution;
@@ -91,32 +87,46 @@ const getRewrittenClassComponent = refDeterministic(
 
 function _getRewrittenClassComponent<
   T extends { new (...args: any[]): Component<any, any>; readonly name: string }
->(ClassComponent: T, ctx: Context): T {
-  return class extends ClassComponent {
+>(ClassComponent: T): T & { $$incarnated?: boolean } {
+  const rv = class extends ClassComponent {
+    static $$incarnated = true;
     // @ts-ignore
     static get name() {
       return ClassComponent.name;
     }
-    $$execution: Execution;
-    $$nodes: CircularLinkedSubscriber[];
+    $$lastExecution: Execution;
+    $$lastNodes: CircularLinkedSubscriber[] | null = null;
     $$notify() {
       this.setState((state) => ({ $$counter: (state.$$counter || 0) + 1 }));
     }
     render(...args: any[]) {
       const parentExecution = CurrentExecution.current;
-      if (this.$$nodes) {
-        this.$$nodes.forEach((node) => node.topic.unsubscribe(node));
-        this.$$nodes = [];
+      if (this.$$lastNodes) {
+        this.$$lastNodes.forEach((node) => node.topic.unsubscribe(node));
+        this.$$lastNodes = [];
       }
-      this.$$execution = { topics: [] };
-      CurrentExecution.current = this.$$execution;
-      const result = runInContext.call(this, super.render, ctx, ...args);
-      return rewriteTree(result);
+      this.$$lastExecution = { topics: [] };
+      CurrentExecution.current = this.$$lastExecution;
+      try {
+        // @ts-ignore
+        const result = super.render(...args);
+        const rewritten = rewriteTree(result);
+        if (this.$$lastNodes) {
+          // Alread mounted. Start immediately subscribing to the new observables:
+          const notify = this.$$notify.bind(this);
+          this.$$lastNodes = this.$$lastExecution.topics.map((topic) =>
+            topic.subscribe(notify)
+          );
+        }
+        return rewritten;
+      } finally {
+        CurrentExecution.current = parentExecution;
+      }
     }
     componentDidMount() {
       const notify = this.$$notify.bind(this);
-      if (this.$$execution)
-        this.$$nodes = this.$$execution.topics.map((topic) =>
+      if (this.$$lastExecution)
+        this.$$lastNodes = this.$$lastExecution.topics.map((topic) =>
           topic.subscribe(notify)
         );
       if (super.componentDidMount)
@@ -125,20 +135,18 @@ function _getRewrittenClassComponent<
     componentWillUnmount() {
       if (super.componentWillUnmount)
         super.componentWillUnmount.call(this, arguments);
-      if (this.$$nodes) {
-        this.$$nodes.forEach((node) => node.topic.unsubscribe(node));
-        this.$$nodes = [];
+      if (this.$$lastNodes) {
+        this.$$lastNodes.forEach((node) => node.topic.unsubscribe(node));
+        this.$$lastNodes = [];
       }
     }
   };
+  return rv;
 }
 
-function incarnatedClass(ClassComponent: { new (): Component }) {
-  const rv = function Incarnated(props: any) {
-    const ctx = useContext(IncarnationContext);
-    const C = getRewrittenClassComponent(ClassComponent, ctx);
-    return React.createElement(C, props);
-  };
+/*function incarnatedClass(ClassComponent: { new (): Component }) {
+  const rv = getRewrittenClassComponent(ClassComponent);
   rv.$$incarnated = true;
   return rv;
 }
+*/

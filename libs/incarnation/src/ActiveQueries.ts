@@ -18,7 +18,7 @@ export class ActiveQueries<
       } while (node !== firstQuery);
     }
   }
-  startManagingCleanup(query: ActiveQuery) {
+  startManagingCleanup(query: ActiveQuery, timeout = 100) {
     if (query.topic.hasSubscribersChanged !== null)
       throw new TypeError( // Todo: Replace with an InternalError and a code. Or an assert function.
         `startManagingCleanup() has already been called for this query.`
@@ -35,7 +35,7 @@ export class ActiveQueries<
       if (query.topic.hasSubscribers) {
         timer && clearTimeout(timer);
       } else {
-        timer = setTimeout(cleanup, 100);
+        timer = setTimeout(cleanup, timeout);
       }
     };
     query.topic.hasSubscribersChanged = scheduleOrStopCleanup;
