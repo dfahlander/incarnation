@@ -3,16 +3,11 @@ import { IsAdaptive } from "./IsAdaptive";
 import { getWrappedProps } from "./utils/getWrappedProps";
 import { Promisified } from "./Promisified";
 import { Context, bindToContext } from "./Context";
-import {
-  setCurrentAction,
-  ActionState,
-  currentAction,
-  rootGuard,
-} from "./suspendify";
+import { promisifySuspenseCall } from "./suspendify";
 
 export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
   return function (...args: any[]) {
-    const rv = rootGuard(this, args, fn);
+    const rv = promisifySuspenseCall(this, args, fn);
     if (rv && rv[IsLazy]) {
       return promisifyIfAdaptive(rv);
     } else {

@@ -24,6 +24,9 @@ describe("promisificability", () => {
     }
   }
   class DB {
+    friends = inject(FriendQuery);
+  }
+  class DBFlavoured {
     friends = use(FriendQuery);
   }
 
@@ -45,7 +48,7 @@ describe("promisificability", () => {
   });
 
   it("should convert adaptable props when switching btwn use() and include()", async () => {
-    const db = include(DB);
+    const db = include(DBFlavoured);
     expect(db.friends.listFriends()).toBeInstanceOf(Promise);
     expect(await db.friends.listFriends()).toEqual(FRIENDS);
     expect(db.friends.numFriends).toBeInstanceOf(Promise);

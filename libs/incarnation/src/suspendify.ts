@@ -140,7 +140,34 @@ export function runImperativeAction(
   }
 }
 
-export function rootGuard(thiz: any, args: any[], fn: (...args: any[]) => any) {
+function rootGuard(thiz: any, args: any[], fn: (...args: any[]) => any) {
+  const result = promisifySuspenseCall(thiz, args, fn);
+  return result; // For now, return without checks. Friendly error messages messes up with included services that use() other services.
+  if (result === undefined) return;
+  if (result && typeof result.then === "function") {
+    result.then((finalResult) => {
+      if (finalResult !== undefined) throw new UncontextualQueryError(fn, args);
+    });
+    return;
+  }
+  throw new UncontextualQueryError(fn, args);
+}
+
+export class UncontextualQueryError extends Error {
+  constructor(fn: Function, args: any[]) {
+    super(
+      `Query called outside Observe context: ${fn.name}(${JSON.stringify(
+        args
+      )})`
+    );
+  }
+}
+
+export function promisifySuspenseCall(
+  thiz: any,
+  args: any[],
+  fn: (...args: any[]) => any
+) {
   // thiz not needed? backend fn is bound anyway?
   const action: ActionState = {
     results: [],
