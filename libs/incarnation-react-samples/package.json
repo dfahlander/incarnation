@@ -4,8 +4,7 @@
   "description": "Use incarnation services from React",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "start:debug": "echo Open chrome://inspect and click DevTools link && ts-node --inspect src/index.ts --runInBand",
+    "start": "webpack-dev-server --mode development",
     "build": "webpack",
     "clean": "rm -rf dist/ && rm -rf *.tsbuildinfo"
   },

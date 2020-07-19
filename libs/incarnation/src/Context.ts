@@ -3,10 +3,12 @@ import { getWrappedProps } from "./utils/getWrappedProps";
 import { refDeterministic } from "./utils/refDeterministic";
 import { PROVIDER } from "./symbols/PROVIDER";
 import { Provider, ClassMapper, ProviderFn } from "./Provider";
+import { CREATE_CLASS } from "./symbols/CREATE_CLASS";
 
 export interface Context {
   readonly mapClass: ClassMapper;
   readonly [PROVIDER]: ProviderFn;
+  readonly type?: string; // For debugging.
 }
 
 export interface StaticContext {
@@ -24,15 +26,16 @@ export interface StaticContext {
 }
 
 const defaultClassMapper: ClassMapper = (requestedClass, mappedClass) =>
-  mappedClass;
+  mappedClass[CREATE_CLASS]?.(requestedClass, mappedClass) ?? mappedClass;
 const defaultProvider: ProviderFn = (next) => defaultClassMapper;
 
 export const rootContext: Context = {
   mapClass: defaultClassMapper,
   [PROVIDER]: defaultProvider,
+  type: "root",
 };
 
-export const baseContext = { ...rootContext };
+export const baseContext = { ...rootContext, type: "base" };
 
 let current: Context | null = null;
 

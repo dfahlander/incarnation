@@ -43,7 +43,7 @@ export function OptimisticUpdater(DataStoreClass, declaration?) {
     OptimisticUpdater,
     DataStoreClass
   ) {};
-  RClass.prototype = declaration;
+  Object.assign(RClass.prototype, declaration);
   return RClass;
 }
 

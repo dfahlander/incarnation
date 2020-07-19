@@ -8,6 +8,7 @@ export interface MutationQueue {
   rev: number;
   add(mutations: Mutation[]): void;
   flush(): Promise<void>;
+  count(): number;
 }
 
 export function MutationQueue(
@@ -38,6 +39,9 @@ export function MutationQueue(
         flushOngoingPromise = _flush().then(() => (flushOngoingPromise = null));
       }
       return flushOngoingPromise;
+    },
+    count() {
+      return this.queued.length + this.beingSent.length;
     },
   };
 

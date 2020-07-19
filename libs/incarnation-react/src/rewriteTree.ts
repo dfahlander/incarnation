@@ -4,14 +4,17 @@ import React, {
   Component,
   useState,
   useEffect,
+  useContext,
 } from "react";
 import {
   refDeterministic,
   CurrentExecution,
   Execution,
   CircularLinkedSubscriber,
+  runInContext,
 } from "incarnation";
 import { IncarnationReactContext } from "./IncarnationReactContext";
+import { readContext } from "./readContext";
 
 export function rewriteTree(node: ReactNode): ReactNode {
   if (!node) return node;
@@ -54,6 +57,7 @@ const getMemoizedProxyComponent = refDeterministic(
 
 function incarnated(FuncComponent: (props: any) => any) {
   const rv = function (props: any) {
+    const ctx = useContext(IncarnationReactContext);
     const [count, setCount] = useState(1);
     const parentExecution = CurrentExecution.current;
     const execution: Execution = { topics: [] };
@@ -66,7 +70,7 @@ function incarnated(FuncComponent: (props: any) => any) {
       return () => nodes.forEach((node) => node.topic.unsubscribe(node));
     });
     try {
-      const result = FuncComponent(props);
+      const result = runInContext(FuncComponent, ctx, [props]);
       return rewriteTree(result);
     } finally {
       CurrentExecution.current = parentExecution;
@@ -101,6 +105,7 @@ function _getRewrittenClassComponent<
     }
     render(...args: any[]) {
       const parentExecution = CurrentExecution.current;
+      const ctx = readContext(IncarnationReactContext);
       if (this.$$lastNodes) {
         this.$$lastNodes.forEach((node) => node.topic.unsubscribe(node));
         this.$$lastNodes = [];
@@ -109,7 +114,7 @@ function _getRewrittenClassComponent<
       CurrentExecution.current = this.$$lastExecution;
       try {
         // @ts-ignore
-        const result = super.render(...args);
+        const result = runInContext(() => super.render(...args), ctx);
         const rewritten = rewriteTree(result);
         if (this.$$lastNodes) {
           // Alread mounted. Start immediately subscribing to the new observables:

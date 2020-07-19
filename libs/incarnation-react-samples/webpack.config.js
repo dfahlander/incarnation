@@ -1,12 +1,26 @@
+const path = require("path");
 module.exports = {
-  mode: "production",
+  mode: "development",
 
   // Enable sourcemaps for debugging webpack's output.
   devtool: "source-map",
 
   resolve: {
     // Add '.ts' and '.tsx' as resolvable extensions.
-    extensions: [".ts", ".tsx"],
+    extensions: [".ts", ".tsx", ".js"],
+  },
+
+  devServer: {
+    //contentBase: path.join(__dirname, "."),
+    contentBase: path.join(__dirname, "."),
+    open: true,
+    //contentBasePublicPath: "/",
+    openPage: "index.html",
+  },
+
+  output: {
+    filename: "dist/bundle.js",
+    path: path.resolve(__dirname, "."),
   },
 
   module: {
@@ -17,6 +31,9 @@ module.exports = {
         use: [
           {
             loader: "ts-loader",
+            options: {
+              projectReferences: true,
+            },
           },
         ],
       },

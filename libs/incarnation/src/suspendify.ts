@@ -89,6 +89,12 @@ export function suspendifyMethodOrGetter(
       // Circular linked list is empty. Create first node:
       queries.firstQuery = newQuery;
     }
+    console.debug(
+      "Queries:",
+      queries.firstQuery,
+      firstQuery?.prev,
+      firstQuery?.next
+    );
     newQuery.promise!.finally(() => queries.startManagingCleanup(newQuery));
     // Suspend:
     throw newQuery.promise;
@@ -103,7 +109,6 @@ export function runImperativeAction(
   fn: (...args: any[]) => any,
   muts?: MutationQueue
 ) {
-  if (fn.name === "add") debugger;
   if (action.pointer < action.results.length) {
     const memorizedResult = action.results[action.pointer++];
     if (memorizedResult.fn !== fn) {

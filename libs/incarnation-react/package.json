@@ -7,6 +7,7 @@
     "test": "jest",
     "test:debug": "echo Open chrome://inspect and click DevTools link && node --inspect ../../node_modules/.bin/jest --runInBand",
     "build": "tsc --build",
+    "watch": "tsc --build --watch",
     "clean": "rm -rf dist/ && rm -rf *.tsbuildinfo"
   },
   "repository": {
@@ -28,6 +29,7 @@
   "homepage": "https://github.com/dfahlander/incarnation#readme",
   "dependencies": {
     "incarnation": "^0.0.1",
-    "react": "^16.13.1"
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   }
 }

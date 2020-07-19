@@ -5,6 +5,7 @@ import { invalidate } from "./invalidate";
 import { MutationQueue } from "./MutationQueue";
 import { reduceResult } from "./utils/reduceResult";
 
+let idCounter = 0;
 export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   fn: (...args: TArgs) => Promise<TResult>;
   instance: any;
@@ -21,6 +22,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   reducers?: ResultReducerSet;
   rev: number;
   _reducedResult: TResult | null;
+  _id = ++idCounter;
 
   constructor(
     instance: any,
@@ -49,11 +51,20 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   }
 
   reducedResult() {
-    if (!this.muts) return this.result;
+    if (!this.muts || this.muts.count() === 0) return this.result;
     const { reducers, muts } = this;
     const { queued, beingSent, topic, rev } = muts;
+
     if (rev !== this.rev) {
       // Need to update reduced result
+      console.debug(
+        "Need to update reduceResult. My Query ID:",
+        this._id,
+        "muts rev:",
+        rev,
+        "this.rev:",
+        this.rev
+      );
       invalidate.invalid = false; // Reset flag before calling reducers
       this._reducedResult = reduceResult(
         reduceResult(this.result, reducers, queued),

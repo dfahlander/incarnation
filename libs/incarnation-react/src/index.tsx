@@ -1,13 +1,19 @@
 import { Provider, deriveContext, resolveProvider, Context } from "incarnation";
-import React, { ReactNode, useContext } from "react";
+import React, { ReactNode, useContext, ReactElement } from "react";
 import { IncarnationReactContext } from "./IncarnationReactContext";
 import { rewriteTree } from "./rewriteTree";
 import { readContext } from "./readContext";
 
 // Integrate Incarnation Context with React Context:
-Context.integrate((fallbackGetter) => () =>
-  readContext(IncarnationReactContext) || fallbackGetter()
-);
+/*Context.integrate((fallbackGetter) => () => {
+  let res;
+  try {
+    res = readContext(IncarnationReactContext);
+    console.debug("Got context from React!");
+    debugger;
+  } catch {}
+  return res || fallbackGetter();
+});*/
 
 // <FriendList /> ==>
 //    render + iteration + toArray() etc leads to Exception: Query called outside Observe context.
@@ -20,7 +26,7 @@ Context.integrate((fallbackGetter) => () =>
 
 export interface IncarnationProps {
   provider: Provider;
-  children: ReactNode;
+  children: ReactElement;
 }
 
 export function Incarnation({ children, provider }: IncarnationProps) {
@@ -35,15 +41,19 @@ export function Incarnation({ children, provider }: IncarnationProps) {
       </IncarnationReactContext.Provider>
     );
   }
-  return <>{children}</>;
+  return children;
 }
 
 interface ObserveProps {
-  children: ReactNode;
+  children: ReactElement;
 }
 
-export function Observe({ children }: ObserveProps) {
-  return rewriteTree(children);
+export function Observe({ children }: ObserveProps): ReactElement {
+  const result = rewriteTree(children);
+  if (result && typeof result === "object" && "type" in result) {
+    return result;
+  }
+  return <>{result}</>;
 }
 
 export interface CacheManagerProps {

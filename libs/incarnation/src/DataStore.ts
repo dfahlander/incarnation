@@ -19,10 +19,23 @@ import { Topic } from "./Topic";
 import { MutationQueue } from "./MutationQueue";
 import { reduceResult } from "./utils/reduceResult";
 import { invalidate } from "./invalidate";
+import { CREATE_CLASS } from "./symbols/CREATE_CLASS";
 
+let counter = 0;
 export abstract class DataStore {
-  static get [PROVIDER](): ProviderFn {
+  private id = ++counter;
+  constructor() {
+    console.log("Creating DataStore ", this.constructor.name);
+  }
+  /*static get [PROVIDER](): ProviderFn {
+    console.log("Providing DataStore", this.name);
     return createDataStoreProvider(this as any);
+  }*/
+  static [CREATE_CLASS](
+    requestedClass: AbstractClass,
+    mappedClass: Class
+  ): Class<DataStore> {
+    return createDataStoreClass(requestedClass, mappedClass);
   }
   readonly $flavors: DataStoreFlavor<this>;
   abstract mutate(mutations: Mutation[]): Promise<PromiseSettledResult<any>[]>;
@@ -90,7 +103,7 @@ type DataStoreFlavor<T> = {
 
 type SuspendifiedDataStore<T> = Suspendified<T>; // Could do something special if want mutate return void.
 
-function _createDataStoreProvider(
+/*function _createDataStoreProvider(
   ConcreteDataStore: Class<DataStore>
 ): ProviderFn {
   return (next) => (_, WantedClass) => {
@@ -98,16 +111,17 @@ function _createDataStoreProvider(
       _,
       ConcreteDataStore.prototype instanceof WantedClass ||
         ConcreteDataStore === WantedClass
-        ? createDataStoreClass(ConcreteDataStore, WantedClass)
+        ? createDataStoreClass(WantedClass, ConcreteDataStore)
         : WantedClass
     );
   };
 }
 const createDataStoreProvider = refDeterministic(_createDataStoreProvider);
+*/
 
-function createDataStoreClass(
-  ConcreteDataStore: Class,
-  Interface: AbstractClass
+const createDataStoreClass = refDeterministic(function createDataStoreClass(
+  Interface: AbstractClass,
+  ConcreteDataStore: Class
 ) {
   const queryMethodPropDescs = getEffectiveProps(ConcreteDataStore.prototype);
   const queryMethodPropNames = new Set(
@@ -189,4 +203,4 @@ function createDataStoreClass(
   }
 
   return WrappedDataStore;
-}
+});

@@ -26,6 +26,7 @@ export class ActiveQueries<
     let timer: any;
     const cleanup = () => {
       if (!query.topic.hasSubscribers) {
+        console.debug("Deleting query", query);
         this.firstQuery = llDelete(this.firstQuery, query);
         // @ts-ignore
         query.next = query.prev = null; // Free up mem faster?
