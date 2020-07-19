@@ -63,6 +63,7 @@ export function MutationQueue(
       console.warn("Unsuccessful mutate()", mutations, "Error:", error);
     }
     que.beingSent = [];
+    que.rev++;
     que.topic.notify(); // Could notify after all flushes are done, but why not notify between also! Think through very-slow-network!
     if (que.queued.length > 0) return await _flush();
   }

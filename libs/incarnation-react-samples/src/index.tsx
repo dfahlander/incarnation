@@ -3,12 +3,22 @@ import ReactDOM from "react-dom";
 import { Incarnation, Observe } from "incarnation-react";
 
 import { Hello } from "./components/Hello";
+import { Environment } from "incarnation";
+import {
+  KeyValueStoreOptimisticUpdater,
+  KeyValueStore,
+} from "./stores/KeyValueStore";
 
+const env = new Environment();
+env.add(KeyValueStore);
+//env.add(KeyValueStoreOptimisticUpdater);
 ReactDOM.render(
-  <Suspense fallback="">
-    <Observe>
-      <Hello />
-    </Observe>
-  </Suspense>,
+  <Incarnation provider={env}>
+    <Suspense fallback="">
+      <Observe>
+        <Hello />
+      </Observe>
+    </Suspense>
+  </Incarnation>,
   document.getElementById("example")
 );

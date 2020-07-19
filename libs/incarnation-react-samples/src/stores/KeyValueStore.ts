@@ -38,7 +38,7 @@ export class KeyValueStore extends DataStore {
   }
 }
 
-export const DataStoreOptimisticUpdater = OptimisticUpdater(KeyValueStore, {
+export const KeyValueStoreOptimisticUpdater = OptimisticUpdater(KeyValueStore, {
   get: (key) => ({
     set: (result, m) => (m.key === key ? m.value : result),
     clear: (result, m) => undefined,

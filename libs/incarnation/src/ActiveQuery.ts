@@ -51,7 +51,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   }
 
   reducedResult() {
-    if (!this.muts || this.muts.count() === 0) return this.result;
+    if (!this.muts) return this.result;
     const { reducers, muts } = this;
     const { queued, beingSent, topic, rev } = muts;
 
@@ -66,11 +66,14 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
         this.rev
       );
       invalidate.invalid = false; // Reset flag before calling reducers
-      this._reducedResult = reduceResult(
-        reduceResult(this.result, reducers, queued),
-        reducers,
-        beingSent
-      );
+      this._reducedResult =
+        this.muts.count() === 0
+          ? this.result
+          : reduceResult(
+              reduceResult(this.result, reducers, queued),
+              reducers,
+              beingSent
+            );
       if (invalidate.invalid) {
         // A reducer invalidated the result. Refresh is needed.
         this.refresh();
@@ -78,7 +81,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       this.rev = rev;
     }
     if (CurrentExecution.current) {
-      CurrentExecution.current.topics.push(topic);
+      //CurrentExecution.current.topics.push(topic); // TODO: Investigate why unmarking this line creates infinite loop.
     }
     return this._reducedResult;
   }
