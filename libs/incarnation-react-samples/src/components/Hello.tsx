@@ -11,7 +11,7 @@ export function Hello() {
     <div>
       Name: {nm}
       <br />
-      Age: {0 /*svc.getAge()*/}
+      Age: {svc.getAge()}
       <br />
       Count: {store.count()}
       <input
@@ -22,6 +22,7 @@ export function Hello() {
           svc.setName(ev.target.value);
         }}
       />
+      <button onClick={() => svc.incrementAge()}>+ age</button>
     </div>
   );
 }

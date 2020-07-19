@@ -85,6 +85,7 @@ export function suspendifyMethodOrGetter(
       newQuery.prev = firstQuery.prev; // Connect new node to last node
       newQuery.next = firstQuery;
       firstQuery.prev.next = newQuery; // Connect last node to new node.
+      firstQuery.prev = newQuery;
     } else {
       // Circular linked list is empty. Create first node:
       queries.firstQuery = newQuery;
@@ -123,10 +124,11 @@ export function runImperativeAction(
     (action.subAction = { results: [], pointer: 0, subAction: null });
   action.subAction.pointer = 0;
   try {
-    const result = muts
-      ? // If muts was given, they need to be flushed before the query can take place
-        muts.flush().then(() => suspendifyIfAdaptive(fn.apply(thiz, args)))
-      : suspendifyIfAdaptive(fn.apply(thiz, args));
+    const result =
+      muts && muts.count() > 0
+        ? // If muts was given, they need to be flushed before the query can take place
+          muts.flush().then(() => suspendifyIfAdaptive(fn.apply(thiz, args)))
+        : suspendifyIfAdaptive(fn.apply(thiz, args));
     if (!result || typeof result.then !== "function") {
       action.results.push({ result, fn, args });
       action.pointer++;
