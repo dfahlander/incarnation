@@ -42,32 +42,29 @@ let current: Context | null = null;
 export const Context: StaticContext =
   globalThis._incarnationContext ||
   (globalThis._incarnationContext = ((<T>(def: T) => {
-    return (value: T) => {
-      function CustomContext(alternateValue?: T) {
-        if (typeof this === "object") {
-          // Constructed by new()
-          // Caller is getOrCreateBoundInstance() from inject().
-          return value;
-        }
-        // Caller wants a provider that will map context to an alternate value
-        // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
-        // If so, return the cached CustomContext instead
-        const provider: ProviderFn = (next) => (
-          requestedClass,
-          mappedClass
-        ) => {
-          if (requestedClass === CustomContext)
-            return (function CustomContextValue() {
-              return alternateValue;
-            } as unknown) as Class;
-          return next(requestedClass, mappedClass);
-        };
-        return provider;
+    function CustomContext(alternateValue?: T) {
+      if (typeof this === "object") {
+        // Constructed by new()
+        // Caller is getOrCreateBoundInstance() from inject().
+        return def;
       }
-      return (CustomContext as any) as {
-        (val: T): Provider;
-        new (): T;
+      // Caller wants a provider that will map context to an alternate value
+      // TODO: check if there is an structural identical value (use deepEquals() somehow? Store on current execution/"fiber" to get a cache that is auto-cleared?)
+      // If so, return the cached CustomContext instead
+      const provider: ProviderFn = (next) => (requestedClass, mappedClass) => {
+        console.debug("Provider xxx");
+        const result: any = next(requestedClass, mappedClass);
+        if (result === CustomContext)
+          return (function CustomContextValue() {
+            return alternateValue;
+          } as unknown) as Class;
+        return result; //next(requestedClass, mappedClass);
       };
+      return provider;
+    }
+    return (CustomContext as any) as {
+      (val: T): Provider;
+      new (): T;
     };
   }) as unknown) as StaticContext);
 

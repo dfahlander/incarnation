@@ -9,6 +9,7 @@ import {
 import { getWrappedProps } from "./getWrappedProps";
 import { refDeterministic } from "./refDeterministic";
 import { IsLazy } from "../IsLazy";
+import { BOUND_CONTEXT } from "../symbols/BOUND_CONTEXT";
 
 /** Gets or creates a contextually bound instance for given context and class.
  *
@@ -27,6 +28,7 @@ function _getOrCreateBoundInstance(ctx: Context, Class: AbstractClass) {
     instance.$flavors = { orig: instance, promise: null, suspense: null };
   }
   instance[IsLazy] = true;
+  instance[BOUND_CONTEXT] = ctx;
   const wrappedProps = getWrappedProps(
     instance,
     (origFn) => bindToContext(origFn, ctx, instance),

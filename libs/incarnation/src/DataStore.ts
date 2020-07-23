@@ -20,6 +20,8 @@ import { MutationQueue } from "./MutationQueue";
 import { reduceResult } from "./utils/reduceResult";
 import { invalidate } from "./invalidate";
 import { CREATE_CLASS } from "./symbols/CREATE_CLASS";
+import { Context, runInContext, bindToContext } from "./Context";
+import { BOUND_CONTEXT } from "./symbols/BOUND_CONTEXT";
 
 let counter = 0;
 export abstract class DataStore {
@@ -74,11 +76,11 @@ function suspendifyMutate(
         currentAction,
         ds,
         [mutations],
-        $mque.add // add never touches `this` so don't have to be bound.
+        $mque.enqueMutations // add never touches `this` so don't have to be bound.
         // Don't provide $mgue as muts because it would make runImperativeAction believe we are a query method.
       );
     } else {
-      $mque.add(mutations);
+      $mque.enqueMutations(mutations);
     }
   };
 }
@@ -139,7 +141,7 @@ const createDataStoreClass = refDeterministic(function createDataStoreClass(
     implements InternalDataStore {
     $mque = MutationQueue(
       // @ts-ignore (TS believes super.mutate is abstract, but it is not.)
-      super.mutate.bind(this),
+      bindToContext(super.mutate, Context.current, this),
       this.$$applyMutateResponse.bind(this)
     );
     $optimisticUpdater = OptimisticUpdater(Interface);

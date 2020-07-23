@@ -1,4 +1,4 @@
-import { DataStore, invalidate } from "incarnation";
+import { DataStore, invalidate, Context, use, inject } from "incarnation";
 import { OptimisticUpdater } from "incarnation";
 
 interface SetMutation {
@@ -13,12 +13,21 @@ interface ClearMutation {
 
 type KeyValueMutation = SetMutation | ClearMutation;
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class KeyValueStore extends DataStore {
+  static Config = Context({ sleepTime: 0 });
   private data = new Map();
   async mutate(
     mutations: KeyValueMutation[]
   ): Promise<PromiseSettledResult<any>[]> {
-    console.debug("Calling mutate", mutations);
+    const { sleepTime } = inject(KeyValueStore.Config);
+    console.debug("SleepTime:", sleepTime);
+    if (sleepTime > 0) {
+      await sleep(sleepTime);
+    }
     for (const m of mutations) {
       if (m.type === "set") {
         this.data.set(m.key, m.value);

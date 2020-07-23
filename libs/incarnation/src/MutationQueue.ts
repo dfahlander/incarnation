@@ -6,7 +6,7 @@ export interface MutationQueue {
   beingSent: Mutation[];
   topic: Topic;
   rev: number;
-  add(mutations: Mutation[]): void;
+  enqueMutations(mutations: Mutation[]): void;
   flush(): Promise<void>;
   count(): number;
 }
@@ -26,7 +26,7 @@ export function MutationQueue(
     beingSent: [],
     topic: new Topic(),
     rev: 0,
-    add(mutations: Mutation[]) {
+    enqueMutations(mutations: Mutation[]) {
       que.queued.push(...mutations);
       que.rev++;
       que.topic.notify();
