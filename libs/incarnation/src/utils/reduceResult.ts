@@ -5,22 +5,23 @@ export function reduceResult(
   result: any,
   reducers: ResultReducerSet | undefined,
   mutations: Mutation[],
-  mutationResults?: PromiseSettledResult<any>[]
+  mutationResults?: any[]
 ) {
   if (!reducers) return invalidate(result);
   if (mutationResults) {
     for (let i = 0, l = mutations.length; i < l; ++i) {
       const mutRes = mutationResults[i];
-      if (mutRes.status === "rejected") continue;
       const m = mutations[i];
       const reducer = reducers[m.type];
-      result = reducer ? reducer(result, m, mutRes.value) : invalidate(result);
+      result = reducer ? reducer(result, m, mutRes) : invalidate(result);
+      //console.debug("Got reduced result", reducer, result, m);
     }
   } else {
     for (let i = 0, l = mutations.length; i < l; ++i) {
       const m = mutations[i];
       const reducer = reducers[m.type];
       result = reducer ? reducer(result, m) : invalidate(result);
+      //console.debug("Got reduced result", reducer, result, m);
     }
   }
   return result;

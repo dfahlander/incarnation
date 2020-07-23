@@ -12,11 +12,11 @@ import {
 const env = new Environment();
 env.add(KeyValueStore);
 //debugger;
-//env.add(KeyValueStore.Config({ sleepTime: 1000 }));
-//env.add(KeyValueStoreOptimisticUpdater);
+env.add(KeyValueStore.Config({ sleepTime: 1000 }));
+env.add(KeyValueStoreOptimisticUpdater);
 ReactDOM.render(
   <Incarnation provider={env}>
-    <Suspense fallback="">
+    <Suspense fallback="Loading...">
       <Observe>
         <Hello />
       </Observe>

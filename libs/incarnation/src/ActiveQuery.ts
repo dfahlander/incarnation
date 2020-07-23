@@ -57,31 +57,31 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
 
     if (rev !== this.rev) {
       // Need to update reduced result
-      console.debug(
+      /*console.debug(
         "Need to update reduceResult. My Query ID:",
         this._id,
         "muts rev:",
         rev,
         "this.rev:",
         this.rev
-      );
+      );*/
       invalidate.invalid = false; // Reset flag before calling reducers
       this._reducedResult =
         this.muts.count() === 0
           ? this.result
           : reduceResult(
-              reduceResult(this.result, reducers, queued),
+              reduceResult(this.result, reducers, beingSent),
               reducers,
-              beingSent
+              queued
             );
-      if (invalidate.invalid) {
+      /*if (invalidate.invalid) {
         // A reducer invalidated the result. Refresh is needed.
         this.refresh();
-      }
+      }*/
       this.rev = rev;
     }
     if (CurrentExecution.current) {
-      //CurrentExecution.current.topics.push(topic); // TODO: Investigate why unmarking this line creates infinite loop.
+      CurrentExecution.current.topics.push(topic);
     }
     return this._reducedResult;
   }

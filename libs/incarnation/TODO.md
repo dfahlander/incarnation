@@ -18,7 +18,8 @@
 
 [-] Fina felmeddelanden om man anropar muterande metoder från render.
 [-] Hantera fallet då man inkluderar "incarnation-react" men inte har `<Observe>`. Cache-timeout default oändlig?
-[ ] Testa bygga en app i react som använder DataStore och react-incarnation
+[X] Testa bygga en app i react som använder DataStore och react-incarnation
+[ ] Lös bugg: Om mutate() tar tid och man köar upp flera mutationer, så hamnar den i evig loop.
 
 # Observables
 
@@ -32,8 +33,19 @@
 [ ] Test reactive use of DataStore through react integration.
 [ ] MutationMerger
 
+# Optimization
+
+[ ] Now, any mutation will rerender any query. Filter that so that only if the reducedResult of a give
+query was changed, signal the query's topic. Don't add the queue's topic directly. Subscribe to it from ActiveQuery and signal own topic if reducedResult differs.
+
+# Questions
+
+[ ] Suspendify imperative action: If mutations are enqueued, we now flush them before getting result back. Should we do it differenly?
+
 # Rearchitecture:
 
 [ ] Rename Topic to Signal
 [ ] Make Context live on globalThis
-[ ] Optimize or Marry CurrentExecution and Context.
+[ ] Optimize or Marry CurrentExecution, currentAction and Context. Maybe stay separate, as the latter follows instances but the formers vary among each call, but offer a way to runInContext() and provide the CurrentExecution.
+[ ] Change how OptimisticUpdater and MutationMerger are resolved. Let them be props of the abstract class
+so that callers dont need to add a set of providers once a store is used.

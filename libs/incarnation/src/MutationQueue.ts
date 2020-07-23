@@ -27,6 +27,12 @@ export function MutationQueue(
     topic: new Topic(),
     rev: 0,
     enqueMutations(mutations: Mutation[]) {
+      console.debug(
+        "Enquing mutations. Queued:",
+        que.queued,
+        "Being sent:",
+        que.beingSent
+      );
       que.queued.push(...mutations);
       que.rev++;
       que.topic.notify();

@@ -45,11 +45,22 @@ export class KeyValueStore extends DataStore {
   async count() {
     return this.data.size;
   }
+
+  /*static optimisticUpdater = OptimisticUpdater(KeyValueStore, {
+    get: (key) => ({
+      set: (result, m) => (m.key === key ? m.value : result),
+      clear: (result, m) => undefined,
+    }),
+  });*/
 }
 
 export const KeyValueStoreOptimisticUpdater = OptimisticUpdater(KeyValueStore, {
   get: (key) => ({
-    set: (result, m) => (m.key === key ? m.value : result),
+    set: (result, m) => {
+      //if (m.key === key) console.debug("get.set:", m.value, result);
+      //else console.debug("get.set.not.found");
+      return m.key === key ? m.value : result;
+    },
     clear: (result, m) => undefined,
   }),
   count: () => ({

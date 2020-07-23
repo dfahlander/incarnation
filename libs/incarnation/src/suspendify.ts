@@ -51,6 +51,7 @@ export function suspendifyMethodOrGetter(
       }
       // If we've ever got a result, return it here:
       // This holds true also if a refresh is happening, or if a refresh resulted in an error.
+      console.debug("Query:", query);
       if (query.hasResult) return query.reducedResult();
       if (query.promise) throw query.promise;
       throw query.error;
@@ -78,7 +79,7 @@ export function suspendifyMethodOrGetter(
       args,
       promise,
       muts,
-      getReducers?.(args)
+      getReducers?.(...args)
     );
 
     if (firstQuery) {
@@ -126,7 +127,8 @@ export function runImperativeAction(
   try {
     const result =
       muts && muts.count() > 0
-        ? // If muts was given, they need to be flushed before the query can take place
+        ? // If muts was given, they need to be flushed before the query can take place. Is this right? Should we use cached result here if present or something like that?
+          // Or should we only do this in case the mutations we have really does affect our query? (Check with reducers?)
           muts.flush().then(() => suspendifyIfAdaptive(fn.apply(thiz, args)))
         : suspendifyIfAdaptive(fn.apply(thiz, args));
     if (!result || typeof result.then !== "function") {

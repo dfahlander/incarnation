@@ -41,6 +41,7 @@ export abstract class DataStore {
   }
   readonly $flavors: DataStoreFlavor<this>;
   abstract mutate(mutations: Mutation[]): Promise<PromiseSettledResult<any>[]>;
+  static optimisticUpdater: Class;
 }
 
 function suspendifyDataStore(ds: DataStore) {

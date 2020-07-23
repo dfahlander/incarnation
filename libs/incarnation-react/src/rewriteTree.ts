@@ -15,6 +15,7 @@ import {
 } from "incarnation";
 import { IncarnationReactContext } from "./IncarnationReactContext";
 import { readContext } from "./readContext";
+import { setCurrentAction, currentAction } from "incarnation/dist/suspendify";
 
 export function rewriteTree(node: ReactNode): ReactNode {
   if (!node) return node;
@@ -61,7 +62,9 @@ function incarnated(FuncComponent: (props: any) => any) {
     const [count, setCount] = useState(1);
     const parentExecution = CurrentExecution.current;
     const execution: Execution = { topics: [] };
+    const parentAction = currentAction;
     CurrentExecution.current = execution;
+    setCurrentAction(null);
     function notify() {
       setCount((count) => count + 1);
     }
@@ -74,6 +77,7 @@ function incarnated(FuncComponent: (props: any) => any) {
       return rewriteTree(result);
     } finally {
       CurrentExecution.current = parentExecution;
+      setCurrentAction(parentAction);
     }
   };
   rv.$$incarnated = true;
