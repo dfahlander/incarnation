@@ -41,6 +41,7 @@ query was changed, signal the query's topic. Don't add the queue's topic directl
 # Questions
 
 [ ] Suspendify imperative action: If mutations are enqueued, we now flush them before getting result back. Should we do it differenly?
+[ ] We had to remove the call to refresh() when reducedResult() was "invalid". Otherwise we could end up in an infinite loop - as it would trigger notifications and then rerender and then again notification and so on. Why did we call refresh from there initially? Have we caused another bug? Should we compute the reduced result directly after mutate instead and refresh there?
 
 # Rearchitecture:
 
