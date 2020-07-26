@@ -5,7 +5,7 @@ export { Provider, resolveProvider } from "./Provider";
 export { Context, deriveContext, runInContext, bindToContext } from "./Context";
 export { refDeterministic } from "./utils/refDeterministic";
 export { CurrentExecution, Execution } from "./CurrentExecution";
-export { CircularLinkedSubscriber } from "./Topic";
+export { SignalSubscriber as CircularLinkedSubscriber } from "./Signal";
 export { DataStore } from "./DataStore";
 export { Environment } from "./Environment";
 export { OptimisticUpdater } from "./OptimisticUpdater";

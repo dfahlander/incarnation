@@ -8,7 +8,7 @@ import {
 } from "./Observable";
 import { CurrentExecution, Execution } from "../CurrentExecution";
 import { ActiveQuery } from "../ActiveQuery";
-import { CircularLinkedSubscriber, Topic } from "../Topic";
+import { SignalSubscription, Signal } from "../Signal";
 
 export type ReactiveMethodOrGetter<T> = T extends (
   ...args: infer TArgs
@@ -39,16 +39,16 @@ export function observifyMethodOrGetter(
     let lastResult = null;
     let status: "pending" | "error" | "success" = "pending";
     let closed = false;
-    const outerTopic = new Topic();
+    const outerSignal = new Signal();
     let innerSubscriptions: {
-      topic: Topic;
-      node: CircularLinkedSubscriber;
+      signal: Signal;
+      node: SignalSubscription;
     }[] = [];
-    outerTopic.hasSubscribersChanged = () => {
-      if (!outerTopic.hasSubscribers) {
+    outerSignal.hasSubscribersChanged = () => {
+      if (!outerSignal.hasSubscribers) {
         if (!closed) {
-          innerSubscriptions.forEach(({ topic, node }) =>
-            topic.unsubscribe(node)
+          innerSubscriptions.forEach(({ signal, node }) =>
+            signal.unsubscribe(node)
           );
           innerSubscriptions = [];
           closed = true;
@@ -58,14 +58,14 @@ export function observifyMethodOrGetter(
     run();
 
     function subscribe(observer: SubscriptionObserver<any>): () => void {
-      const node = outerTopic.subscribe(() => {
+      const node = outerSignal.subscribe(() => {
         if (status === "success") {
           observer.next(lastResult);
         } else {
           observer.error(lastResult);
         }
       });
-      return () => outerTopic.unsubscribe(node);
+      return () => outerSignal.unsubscribe(node);
     }
 
     if (
@@ -94,8 +94,8 @@ export function observifyMethodOrGetter(
 
       let rv: any;
       const parentExecution = CurrentExecution.current;
-      const { topics } = (CurrentExecution.current = {
-        topics: [],
+      const { signals } = (CurrentExecution.current = {
+        signals: [],
       } as Execution);
       try {
         rv = fn.apply(thiz, args);
@@ -107,20 +107,20 @@ export function observifyMethodOrGetter(
         }
         status = "error";
         lastResult = x;
-        outerTopic.notify();
+        outerSignal.notify();
         return;
       }
       const value = rv;
       if (status !== "success" || lastResult !== value) {
         status = "success";
         lastResult = value;
-        outerTopic.notify();
+        outerSignal.notify();
       }
       let reexecuted = false;
       const onNotify = function () {
         if (closed) return;
-        innerSubscriptions.forEach(({ topic, node }) =>
-          topic.unsubscribe(node)
+        innerSubscriptions.forEach(({ signal, node }) =>
+          signal.unsubscribe(node)
         );
         innerSubscriptions = [];
         if (!reexecuted) {
@@ -128,9 +128,9 @@ export function observifyMethodOrGetter(
           run();
         }
       };
-      innerSubscriptions = topics.map((topic) => ({
-        topic,
-        node: topic.subscribe(onNotify),
+      innerSubscriptions = signals.map((signal) => ({
+        signal,
+        node: signal.subscribe(onNotify),
       }));
     }
   }

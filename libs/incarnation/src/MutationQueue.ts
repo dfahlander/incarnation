@@ -1,10 +1,10 @@
 import { Mutation } from "./DataStoreTypes";
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 
 export interface MutationQueue {
   queued: Mutation[];
   beingSent: Mutation[];
-  topic: Topic;
+  signal: Signal;
   rev: number;
   enqueMutations(mutations: Mutation[]): void;
   flush(): Promise<void>;
@@ -24,7 +24,7 @@ export function MutationQueue(
   const que: MutationQueue = {
     queued: [],
     beingSent: [],
-    topic: new Topic(),
+    signal: new Signal(),
     rev: 0,
     enqueMutations(mutations: Mutation[]) {
       console.debug(
@@ -35,7 +35,7 @@ export function MutationQueue(
       );
       que.queued.push(...mutations);
       que.rev++;
-      que.topic.notify();
+      que.signal.notify();
       scheduleFlush();
     },
     flush(): Promise<void> {
@@ -70,7 +70,7 @@ export function MutationQueue(
     }
     que.beingSent = [];
     que.rev++;
-    que.topic.notify(); // Could notify after all flushes are done, but why not notify between also! Think through very-slow-network!
+    que.signal.notify(); // Could notify after all flushes are done, but why not notify between also! Think through very-slow-network!
     if (que.queued.length > 0) return await _flush();
   }
 

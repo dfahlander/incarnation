@@ -6,7 +6,7 @@ import { ActiveQuery } from "./ActiveQuery";
 import { ActiveQueries } from "./ActiveQueries";
 import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
 import { Context } from "./Context";
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 import { ResultReducerSet, GetResultReducers } from "./DataStoreTypes";
 import { OptimisticUpdater } from "./OptimisticUpdater";
 import { MutationQueue } from "./MutationQueue";
@@ -47,7 +47,7 @@ export function suspendifyMethodOrGetter(
     const query = firstQuery && findQuery(firstQuery, args, firstQuery.prev);
     if (query) {
       if (CurrentExecution.current) {
-        CurrentExecution.current.topics.push(query.topic);
+        CurrentExecution.current.signals.push(query.signal);
       }
       // If we've ever got a result, return it here:
       // This holds true also if a refresh is happening, or if a refresh resulted in an error.

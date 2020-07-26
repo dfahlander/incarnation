@@ -1,40 +1,38 @@
-import { llDelete, LLNode } from "./utils/ll";
-
-export interface CircularLinkedSubscriber extends LLNode {
-  topic: Topic;
+export interface SignalSubscription {
+  signal: Signal;
   notify: NotifyFunction;
-  prev: CircularLinkedSubscriber;
-  next: CircularLinkedSubscriber;
+  prev: SignalSubscription;
+  next: SignalSubscription;
 }
 
-export type NotifyFunction = (this: CircularLinkedSubscriber) => void;
+export type NotifyFunction = (this: SignalSubscription) => void;
 
-export class Topic {
-  private lastSubscriber: CircularLinkedSubscriber | null = null;
+export class Signal {
+  private lastSubscriber: SignalSubscription | null = null;
   hasSubscribersChanged: (() => void) | null = null;
 
   get hasSubscribers() {
     return this.lastSubscriber !== null;
   }
 
-  subscribe(notify: NotifyFunction): CircularLinkedSubscriber {
+  subscribe(notify: NotifyFunction): SignalSubscription {
     const { lastSubscriber: lastListener } = this;
     if (lastListener) {
-      const newNode: CircularLinkedSubscriber = {
+      const newNode: SignalSubscription = {
         prev: lastListener,
         next: lastListener.next,
         notify,
-        topic: this,
+        signal: this,
       };
       lastListener.next = newNode;
       this.lastSubscriber = newNode;
       return newNode;
     } else {
-      const newNode: CircularLinkedSubscriber = {
-        prev: (null as any) as CircularLinkedSubscriber,
-        next: (null as any) as CircularLinkedSubscriber,
+      const newNode: SignalSubscription = {
+        prev: (null as any) as SignalSubscription,
+        next: (null as any) as SignalSubscription,
         notify,
-        topic: this,
+        signal: this,
       };
       newNode.next = newNode.prev = newNode;
       this.lastSubscriber = newNode;
@@ -42,14 +40,6 @@ export class Topic {
       return newNode;
     }
   }
-
-  /*once(notify: NotifyFunction): CircularLinkedSubscriber {
-    const topic = this;
-    return topic.subscribe(function () {
-      topic.unsubscribe(this);
-      notify.apply(this);
-    });
-  }*/
 
   notify() {
     const { lastSubscriber } = this;
@@ -68,12 +58,22 @@ export class Topic {
     }
   }
 
-  unsubscribe(listener: CircularLinkedSubscriber) {
+  unsubscribe(listener: SignalSubscription) {
     if (!listener || !listener.notify)
-      throw new TypeError(`Given listener not a TopicListener`);
-    this.lastSubscriber = llDelete(this.lastSubscriber, listener);
-    if (!this.lastSubscriber && this.hasSubscribersChanged) {
-      this.hasSubscribersChanged();
+      throw new TypeError(`Given listener not a SignalSubscriber`);
+    // Delete node:
+    const { prev, next } = listener;
+    if (prev) prev.next = next;
+    if (next) next.prev = prev;
+    // @ts-ignore
+    node.prev = node.next = null; // Free upp mem.
+    if (listener === this.lastSubscriber) {
+      if (prev === next) {
+        this.lastSubscriber = null;
+        this.hasSubscribersChanged?.();
+      } else {
+        this.lastSubscriber = prev;
+      }
     }
   }
 }

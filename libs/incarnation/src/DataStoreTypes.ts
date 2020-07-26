@@ -1,4 +1,4 @@
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 
 export type Mutation = { type: string };
 

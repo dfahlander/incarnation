@@ -1,7 +1,7 @@
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 
 export interface Execution {
-  topics: Topic[];
+  signals: Signal[];
 }
 
 export const _CurrentExecution = {

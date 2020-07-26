@@ -15,7 +15,7 @@ import { getEffectiveProps } from "./utils/getEffectiveProps";
 import { State, Const } from "./State";
 import { OptimisticUpdater } from "./OptimisticUpdater";
 import { Mutation } from "./DataStoreTypes";
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 import { MutationQueue } from "./MutationQueue";
 import { reduceResult } from "./utils/reduceResult";
 import { invalidate } from "./invalidate";

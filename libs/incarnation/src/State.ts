@@ -1,10 +1,10 @@
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 import { ConstructionContext } from "./Context";
 import { CurrentExecution } from "./CurrentExecution";
 
 export interface State<T = any> {
   value: T;
-  topic: Topic;
+  signal: Signal;
   read(): T;
   set(newValue: T): void;
 }
@@ -14,7 +14,7 @@ export interface StateConstructor {
   new <T>(getInitialValue: () => T): State<T>;
 }
 
-export const State = ((getInitialValue: () => any) => {
+export const State = function (this: State, getInitialValue: () => any) {
   if (typeof this !== "object") {
     // Called as function (without new)
     const cctx = ConstructionContext;
@@ -26,8 +26,8 @@ export const State = ((getInitialValue: () => any) => {
     return (cctx.values[cctx.pos++] = new State(getInitialValue));
   }
   this.value = getInitialValue();
-  this.topic = new Topic();
-}) as StateConstructor;
+  this.signal = new Signal();
+} as StateConstructor;
 
 export const Const = <T = any>(getValue: () => T) => {
   const cctx = ConstructionContext;
@@ -42,12 +42,12 @@ export const Const = <T = any>(getValue: () => T) => {
 State.prototype = {
   read(this: State) {
     if (CurrentExecution.current) {
-      CurrentExecution.current.topics.push(this.topic);
+      CurrentExecution.current.signals.push(this.signal);
     }
     return this.value;
   },
   set(this: State, value: any) {
     this.value = value;
-    this.topic.notify();
+    this.signal.notify();
   },
 };

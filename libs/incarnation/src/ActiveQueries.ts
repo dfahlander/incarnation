@@ -1,4 +1,3 @@
-import { llDelete } from "./utils/ll";
 import { ActiveQuery } from "./ActiveQuery";
 
 export class ActiveQueries<
@@ -18,28 +17,35 @@ export class ActiveQueries<
       } while (node !== firstQuery);
     }
   }
+
   startManagingCleanup(query: ActiveQuery, timeout = 100) {
-    if (query.topic.hasSubscribersChanged !== null)
+    if (query.signal.hasSubscribersChanged !== null)
       throw new TypeError( // Todo: Replace with an InternalError and a code. Or an assert function.
         `startManagingCleanup() has already been called for this query.`
       );
     let timer: any;
     const cleanup = () => {
-      if (!query.topic.hasSubscribers) {
+      if (!query.signal.hasSubscribers) {
         console.debug("Deleting query", query);
-        this.firstQuery = llDelete(this.firstQuery, query);
+        // Delete query:
+        const { prev, next } = query;
+        if (prev) prev.next = next;
+        if (next) next.prev = prev;
         // @ts-ignore
-        query.next = query.prev = null; // Free up mem faster?
+        query.prev = query.next = null; // Free upp mem.
+        if (query === this.firstQuery) {
+          this.firstQuery = prev === next ? null : prev;
+        }
       }
     };
     const scheduleOrStopCleanup = () => {
-      if (query.topic.hasSubscribers) {
+      if (query.signal.hasSubscribers) {
         timer && clearTimeout(timer);
       } else {
         timer = setTimeout(cleanup, timeout);
       }
     };
-    query.topic.hasSubscribersChanged = scheduleOrStopCleanup;
+    query.signal.hasSubscribersChanged = scheduleOrStopCleanup;
     scheduleOrStopCleanup();
   }
 }

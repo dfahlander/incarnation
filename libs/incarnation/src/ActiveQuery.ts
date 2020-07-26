@@ -1,4 +1,4 @@
-import { Topic } from "./Topic";
+import { Signal } from "./Signal";
 import { ResultReducerSet, Mutation } from "./DataStoreTypes";
 import { CurrentExecution } from "./CurrentExecution";
 import { invalidate } from "./invalidate";
@@ -15,7 +15,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   result: TResult | null;
   promise: Promise<TResult> | null;
   error: any;
-  topic: Topic;
+  signal: Signal;
   next: ActiveQuery<TArgs, TResult>;
   prev: ActiveQuery<TArgs, TResult>;
   muts?: MutationQueue;
@@ -39,7 +39,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
     this.isLoading = true;
     this.result = null;
     this.error = null;
-    this.topic = new Topic();
+    this.signal = new Signal();
     this.next = this;
     this.prev = this;
     this.promise = null;
@@ -53,7 +53,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
   reducedResult() {
     if (!this.muts) return this.result;
     const { reducers, muts } = this;
-    const { queued, beingSent, topic, rev } = muts;
+    const { queued, beingSent, signal, rev } = muts;
 
     if (rev !== this.rev) {
       // Need to update reduced result
@@ -81,7 +81,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       this.rev = rev;
     }
     if (CurrentExecution.current) {
-      CurrentExecution.current.topics.push(topic);
+      CurrentExecution.current.signals.push(signal);
     }
     return this._reducedResult;
   }
@@ -102,7 +102,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
         this.isLoading = true;
         const debouncedLoadingNotif = setTimeout(() => {
           if (this.isLoading) {
-            this.topic.notify(); // Notify that loading state has changed
+            this.signal.notify(); // Notify that loading state has changed
           }
         }, 50);
         this.promise.finally(() => clearTimeout(debouncedLoadingNotif));
@@ -124,7 +124,7 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       this.rev = -1;
       this.error = null;
       this.isLoading = false;
-      this.topic.notify();
+      this.signal.notify();
     }
     return result;
   }
@@ -134,13 +134,13 @@ export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
       this.promise = null;
       this.error = error;
       this.isLoading = false;
-      this.topic.notify();
+      this.signal.notify();
     }
     return error;
   }
 
   refresh() {
-    if (this.topic.hasSubscribers) {
+    if (this.signal.hasSubscribers) {
       this.setResult(this.fn.apply(this.instance, this.args));
     }
   }

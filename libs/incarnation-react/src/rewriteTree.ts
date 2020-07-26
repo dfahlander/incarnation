@@ -61,7 +61,7 @@ function incarnated(FuncComponent: (props: any) => any) {
     const ctx = useContext(IncarnationReactContext);
     const [count, setCount] = useState(1);
     const parentExecution = CurrentExecution.current;
-    const execution: Execution = { topics: [] };
+    const execution: Execution = { signals: [] };
     const parentAction = currentAction;
     CurrentExecution.current = execution;
     setCurrentAction(null);
@@ -69,8 +69,8 @@ function incarnated(FuncComponent: (props: any) => any) {
       setCount((count) => count + 1);
     }
     useEffect(() => {
-      const nodes = execution.topics.map((topic) => topic.subscribe(notify));
-      return () => nodes.forEach((node) => node.topic.unsubscribe(node));
+      const nodes = execution.signals.map((signal) => signal.subscribe(notify));
+      return () => nodes.forEach((node) => node.signal.unsubscribe(node));
     });
     try {
       const result = runInContext(FuncComponent, ctx, [props]);
@@ -111,10 +111,10 @@ function _getRewrittenClassComponent<
       const parentExecution = CurrentExecution.current;
       const ctx = readContext(IncarnationReactContext);
       if (this.$$lastNodes) {
-        this.$$lastNodes.forEach((node) => node.topic.unsubscribe(node));
+        this.$$lastNodes.forEach((node) => node.signal.unsubscribe(node));
         this.$$lastNodes = [];
       }
-      this.$$lastExecution = { topics: [] };
+      this.$$lastExecution = { signals: [] };
       CurrentExecution.current = this.$$lastExecution;
       try {
         // @ts-ignore
@@ -123,8 +123,8 @@ function _getRewrittenClassComponent<
         if (this.$$lastNodes) {
           // Alread mounted. Start immediately subscribing to the new observables:
           const notify = this.$$notify.bind(this);
-          this.$$lastNodes = this.$$lastExecution.topics.map((topic) =>
-            topic.subscribe(notify)
+          this.$$lastNodes = this.$$lastExecution.signals.map((signal) =>
+            signal.subscribe(notify)
           );
         }
         return rewritten;
@@ -135,8 +135,8 @@ function _getRewrittenClassComponent<
     componentDidMount() {
       const notify = this.$$notify.bind(this);
       if (this.$$lastExecution)
-        this.$$lastNodes = this.$$lastExecution.topics.map((topic) =>
-          topic.subscribe(notify)
+        this.$$lastNodes = this.$$lastExecution.signals.map((signal) =>
+          signal.subscribe(notify)
         );
       if (super.componentDidMount)
         super.componentDidMount.call(this, arguments);
@@ -145,7 +145,7 @@ function _getRewrittenClassComponent<
       if (super.componentWillUnmount)
         super.componentWillUnmount.call(this, arguments);
       if (this.$$lastNodes) {
-        this.$$lastNodes.forEach((node) => node.topic.unsubscribe(node));
+        this.$$lastNodes.forEach((node) => node.signal.unsubscribe(node));
         this.$$lastNodes = [];
       }
     }

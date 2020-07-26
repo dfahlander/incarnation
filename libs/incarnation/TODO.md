@@ -36,7 +36,7 @@
 # Optimization
 
 [ ] Now, any mutation will rerender any query. Filter that so that only if the reducedResult of a give
-query was changed, signal the query's topic. Don't add the queue's topic directly. Subscribe to it from ActiveQuery and signal own topic if reducedResult differs.
+query was changed, signal the query's signal. Don't add the queue's signal directly. Subscribe to it from ActiveQuery and signal own signal if reducedResult differs.
 
 # Questions
 
@@ -45,7 +45,7 @@ query was changed, signal the query's topic. Don't add the queue's topic directl
 
 # Rearchitecture:
 
-[ ] Rename Topic to Signal
+[V] Rename Topic to Signal
 [ ] Make Context live on globalThis
 [ ] Optimize or Marry CurrentExecution, currentAction and Context. Maybe stay separate, as the latter follows instances but the formers vary among each call, but offer a way to runInContext() and provide the CurrentExecution.
 [ ] Change how OptimisticUpdater and MutationMerger are resolved. Let them be props of the abstract class
