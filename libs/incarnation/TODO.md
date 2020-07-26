@@ -46,7 +46,7 @@ query was changed, signal the query's signal. Don't add the queue's signal direc
 # Rearchitecture:
 
 [V] Rename Topic to Signal
-[ ] Make Context live on globalThis
-[ ] Optimize or Marry CurrentExecution, currentAction and Context. Maybe stay separate, as the latter follows instances but the formers vary among each call, but offer a way to runInContext() and provide the CurrentExecution.
 [ ] Change how OptimisticUpdater and MutationMerger are resolved. Let them be props of the abstract class
 so that callers dont need to add a set of providers once a store is used.
+[ ] Make Context live on globalThis
+[ ] Optimize or Marry CurrentExecution, currentAction and Context. Maybe stay separate, as the latter follows instances but the formers vary among each call, but offer a way to runInContext() and provide the CurrentExecution.
