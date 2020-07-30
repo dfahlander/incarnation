@@ -3,7 +3,7 @@ import { AbstractClass, Class } from "./Class";
 import { inject } from "./inject";
 import { getSpecificGenericType } from "./utils/getSpecificGenericType";
 
-type OptimisticReducerSpec<TMutation extends { type: string }, R> = {
+type DataStoreReducerSpec<TMutation extends { type: string }, R> = {
   [MutationTypeString in TMutation["type"]]?: (
     prev: R,
     op: TMutation extends { type: MutationTypeString } ? TMutation : never,
@@ -11,7 +11,7 @@ type OptimisticReducerSpec<TMutation extends { type: string }, R> = {
   ) => R;
 };
 
-export type OptimisticUpdater<T extends DataStore = DataStore> = T extends {
+export type DataStoreReducerSet<T = DataStore> = T extends {
   mutate(mutations: Array<infer TMutation>): Promise<any>;
 }
   ? TMutation extends { type: string }
@@ -19,13 +19,13 @@ export type OptimisticUpdater<T extends DataStore = DataStore> = T extends {
         [P in Exclude<keyof T, keyof DataStore>]?: T[P] extends (
           ...args: infer A
         ) => Promise<infer R>
-          ? (...args: A) => OptimisticReducerSpec<TMutation, R>
+          ? (...args: A) => DataStoreReducerSpec<TMutation, R>
           : never;
       }
     : never
   : never;
 
-export function OptimisticUpdater<T extends DataStore>(
+/*export function OptimisticUpdater<T extends DataStore>(
   Class: AbstractClass<T>,
   declaration: OptimisticUpdater<T>
 ): Class<OptimisticUpdater<T>>;
@@ -45,7 +45,7 @@ export function OptimisticUpdater(DataStoreClass, declaration?) {
   ) {};
   Object.assign(RClass.prototype, declaration);
   return RClass;
-}
+}*/
 
 /*
 //

@@ -5,7 +5,7 @@ import { Incarnation, Observe } from "incarnation-react";
 import { Hello } from "./components/Hello";
 import { Environment } from "incarnation";
 import {
-  KeyValueStoreOptimisticUpdater,
+  //KeyValueStoreOptimisticUpdater,
   KeyValueStore,
 } from "./stores/KeyValueStore";
 
@@ -13,7 +13,7 @@ const env = new Environment();
 env.add(KeyValueStore);
 //debugger;
 env.add(KeyValueStore.Config({ sleepTime: 1000 }));
-env.add(KeyValueStoreOptimisticUpdater);
+//env.add(KeyValueStoreOptimisticUpdater);
 ReactDOM.render(
   <Incarnation provider={env}>
     <Suspense fallback="Loading...">

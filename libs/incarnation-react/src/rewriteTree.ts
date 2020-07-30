@@ -10,7 +10,7 @@ import {
   refDeterministic,
   CurrentExecution,
   Execution,
-  CircularLinkedSubscriber,
+  SignalSubscription,
   runInContext,
 } from "incarnation";
 import { IncarnationReactContext } from "./IncarnationReactContext";
@@ -103,7 +103,7 @@ function _getRewrittenClassComponent<
       return ClassComponent.name;
     }
     $$lastExecution: Execution;
-    $$lastNodes: CircularLinkedSubscriber[] | null = null;
+    $$lastNodes: SignalSubscription[] | null = null;
     $$notify() {
       this.setState((state) => ({ $$counter: (state.$$counter || 0) + 1 }));
     }

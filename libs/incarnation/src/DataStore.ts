@@ -13,7 +13,7 @@ import { AbstractClass, Class } from "./Class";
 import { getWrappedProps } from "./utils/getWrappedProps";
 import { getEffectiveProps } from "./utils/getEffectiveProps";
 import { State, Const } from "./State";
-import { OptimisticUpdater } from "./OptimisticUpdater";
+import { DataStoreReducerSet } from "./DataStoreReducerSet";
 import { Mutation } from "./DataStoreTypes";
 import { Signal } from "./Signal";
 import { MutationQueue } from "./MutationQueue";
@@ -24,11 +24,12 @@ import { Context, runInContext, bindToContext } from "./Context";
 import { BOUND_CONTEXT } from "./symbols/BOUND_CONTEXT";
 
 let counter = 0;
+
 export abstract class DataStore {
   private id = ++counter;
-  constructor() {
+  /*constructor() {
     console.log("Creating DataStore ", this.constructor.name);
-  }
+  }*/
   /*static get [PROVIDER](): ProviderFn {
     console.log("Providing DataStore", this.name);
     return createDataStoreProvider(this as any);
@@ -41,7 +42,9 @@ export abstract class DataStore {
   }
   readonly $flavors: DataStoreFlavor<this>;
   abstract mutate(mutations: Mutation[]): Promise<PromiseSettledResult<any>[]>;
-  static optimisticUpdater: Class;
+  static reducers: DataStoreReducerSet<DataStore> = {} as DataStoreReducerSet<
+    DataStore
+  >;
 }
 
 function suspendifyDataStore(ds: DataStore) {
@@ -62,7 +65,7 @@ function suspendifyDataStore(ds: DataStore) {
 
 interface InternalDataStore extends DataStore {
   $mque: MutationQueue;
-  $optimisticUpdater: OptimisticUpdater;
+  $optimisticUpdater: DataStoreReducerSet;
   //$mutationMerger: MutationMerger; // Unmark when we have that type. Use it from suspendifyMutate.
 }
 
@@ -123,7 +126,7 @@ const createDataStoreProvider = refDeterministic(_createDataStoreProvider);
 */
 
 const createDataStoreClass = refDeterministic(function createDataStoreClass(
-  Interface: AbstractClass,
+  Interface: AbstractClass<DataStore>,
   ConcreteDataStore: Class
 ) {
   const queryMethodPropDescs = getEffectiveProps(ConcreteDataStore.prototype);
@@ -145,7 +148,7 @@ const createDataStoreClass = refDeterministic(function createDataStoreClass(
       bindToContext(super.mutate, Context.current, this),
       this.$$applyMutateResponse.bind(this)
     );
-    $optimisticUpdater = OptimisticUpdater(Interface);
+    $optimisticUpdater = Interface["reducers"] || {};
 
     private $$flavors: any;
 

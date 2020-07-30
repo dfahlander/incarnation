@@ -8,7 +8,7 @@ import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
 import { Context } from "./Context";
 import { Signal } from "./Signal";
 import { ResultReducerSet, GetResultReducers } from "./DataStoreTypes";
-import { OptimisticUpdater } from "./OptimisticUpdater";
+import { DataStoreReducerSet } from "./DataStoreReducerSet";
 import { MutationQueue } from "./MutationQueue";
 
 export let currentAction: null | ActionState = null;

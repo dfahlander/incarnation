@@ -66,7 +66,7 @@ export class Signal {
     if (prev) prev.next = next;
     if (next) next.prev = prev;
     // @ts-ignore
-    node.prev = node.next = null; // Free upp mem.
+    listener.prev = listener.next = null; // Free upp mem.
     if (listener === this.lastSubscriber) {
       if (prev === next) {
         this.lastSubscriber = null;

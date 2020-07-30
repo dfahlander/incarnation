@@ -20,6 +20,7 @@ function sleep(ms: number) {
 export class KeyValueStore extends DataStore {
   static Config = Context({ sleepTime: 0 });
   private data = new Map();
+
   async mutate(
     mutations: KeyValueMutation[]
   ): Promise<PromiseSettledResult<any>[]> {
@@ -45,15 +46,27 @@ export class KeyValueStore extends DataStore {
   async count() {
     return this.data.size;
   }
-
-  /*static optimisticUpdater = OptimisticUpdater(KeyValueStore, {
-    get: (key) => ({
-      set: (result, m) => (m.key === key ? m.value : result),
-      clear: (result, m) => undefined,
-    }),
-  });*/
 }
 
+KeyValueStore.reducers = {
+  get(key) {
+    return {
+      set: (result, m) => {
+        //if (m.key === key) console.debug("get.set:", m.value, result);
+        //else console.debug("get.set.not.found");
+        return m.key === key ? m.value : result;
+      },
+      clear: (result, m) => undefined,
+    };
+  },
+  count() {
+    return {
+      clear: (result, m) => 0,
+    };
+  },
+} as OptimisticUpdater<KeyValueStore>;
+
+/*
 export const KeyValueStoreOptimisticUpdater = OptimisticUpdater(KeyValueStore, {
   get: (key) => ({
     set: (result, m) => {
@@ -67,3 +80,4 @@ export const KeyValueStoreOptimisticUpdater = OptimisticUpdater(KeyValueStore, {
     clear: (result, m) => 0,
   }),
 });
+*/
