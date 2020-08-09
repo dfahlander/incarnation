@@ -20,6 +20,7 @@
 [-] Hantera fallet då man inkluderar "incarnation-react" men inte har `<Observe>`. Cache-timeout default oändlig?
 [X] Testa bygga en app i react som använder DataStore och react-incarnation
 [X] Lös bugg: Om mutate() tar tid och man köar upp flera mutationer, så hamnar den i evig loop.
+[ ] Lös bugg: `<Observe>` klarar bara direkta funktionskomponenter som children.
 
 # Observables
 
