@@ -3,7 +3,7 @@
     "lib": ["es2020", "dom"],
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "importHelpers": true,
+    "importHelpers": false,
     "jsx": "react",
     "target": "es2018",
     "module": "commonjs",

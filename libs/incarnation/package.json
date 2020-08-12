@@ -1,8 +1,11 @@
 {
   "name": "incarnation",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Turn async code reactive",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "esnext": "dist/index.js",
+  "type": "module",
   "scripts": {
     "test": "jest",
     "test:debug": "echo Open chrome://inspect and click DevTools link && node --inspect ../../node_modules/.bin/jest --runInBand",
