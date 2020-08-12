@@ -10,3 +10,8 @@ export { DataStore } from "./DataStore";
 export { Environment } from "./Environment";
 export { DataStoreReducerSet as OptimisticUpdater } from "./DataStoreReducerSet";
 export { invalidate } from "./invalidate";
+export { DataStoreReducerSet } from "./DataStoreReducerSet";
+export { invokableClass } from "./utils/invokableClass";
+export { IsLazy } from "./IsLazy";
+export { Flavors } from "./Flavors";
+export { SuspendifiedIfAdaptive } from "./Suspendified";

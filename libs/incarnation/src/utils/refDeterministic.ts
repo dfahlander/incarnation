@@ -53,9 +53,19 @@ function refDeterministicN<FN extends (...args: any[]) => any>(fn): FN {
   } as FN;
 }
 
-export function refDeterministic<FN extends (...args: any[]) => any>(
+export function refDeterministic(
+  target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor
+);
+export function refDeterministic<FN extends (...args: object[]) => any>(
   fn: FN
-): FN {
+): FN;
+export function refDeterministic(fn: any, _?: string, d?: PropertyDescriptor) {
+  if (d) {
+    d.value = refDeterministic(d.value);
+    return;
+  }
   return fn.length === 1
     ? refDeterministic1(fn) // Optimization of common case
     : fn.length === 2
