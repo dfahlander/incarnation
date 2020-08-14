@@ -31,12 +31,14 @@ export type PromisifiedIfAdaptive<T> = T extends {
     }
   : T;
 
-export type Promisified<T> = {
-  [M in keyof T]: PromisifiedMethodOrGetter<T[M]>;
-} & {
-  [IsLazy]?: boolean;
-  $flavors: {
-    orig: Orig<T>;
-    suspense: Suspendified<T>;
-  };
-};
+export type Promisified<T> = T extends { $flavors: { promise?: infer P } }
+  ? P
+  : {
+      [M in keyof T]: PromisifiedMethodOrGetter<T[M]>;
+    } & {
+      [IsLazy]?: boolean;
+      $flavors: {
+        orig: Orig<T>;
+        suspense: Suspendified<T>;
+      };
+    };
