@@ -1,5 +1,10 @@
-import { DataStore, invalidate, Context, use, inject } from "incarnation";
-import { OptimisticUpdater } from "incarnation";
+import {
+  DataStore,
+  Context,
+  use,
+  inject,
+  OptimisticUpdater,
+} from "incarnation";
 
 interface SetMutation {
   type: "set";
