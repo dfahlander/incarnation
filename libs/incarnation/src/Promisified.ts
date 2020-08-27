@@ -2,10 +2,10 @@
  Seems not to be correct.
 */
 
-import { IsAdaptive } from "./IsAdaptive";
-import { IsLazy } from "./IsLazy";
-import { Orig } from "./Orig";
-import { Suspendified } from "./Suspendified";
+import { IsAdaptive } from "./IsAdaptive.js";
+import { IsLazy } from "./IsLazy.js";
+import { Orig } from "./Orig.js";
+import { Suspendified } from "./Suspendified.js";
 
 export type PromisifiedMethodOrGetter<T> = T extends (
   ...args: infer TArgs

@@ -1,13 +1,15 @@
-import { IsAdaptive } from "./IsAdaptive";
-import { Suspendified } from "./Suspendified";
-import { AbstractClass } from "./Class";
-import { inject } from "./inject";
-import { Provider } from "./Provider";
-import { suspendify } from "./suspendify";
+import { IsAdaptive } from "./IsAdaptive.js";
+import { Suspendified } from "./Suspendified.js";
+import { AbstractClass } from "./Class.js";
+import { inject } from "./inject.js";
+import { Provider } from "./Provider.js";
+import { suspendify } from "./suspendify.js";
+
 export function use<T extends object>(
   Class: AbstractClass<T>,
   ...providers: Provider[]
 ): Suspendified<T>;
+
 export function use<T extends object>(): Suspendified<T> {
   // TODO: Instead of sending arguments further, incorporate the resulting context if arguments are
   // given and call suspendify within that context. Why? Because when suspendify() is called on a DataStore,

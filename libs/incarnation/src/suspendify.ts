@@ -1,15 +1,13 @@
-import { getWrappedProps } from "./utils/getWrappedProps";
-import { IsAdaptive } from "./IsAdaptive";
-import { Suspendified } from "./Suspendified";
-import { CurrentExecution } from "./CurrentExecution";
-import { ActiveQuery } from "./ActiveQuery";
-import { ActiveQueries } from "./ActiveQueries";
-import { deepEqualsImmutable } from "./utils/deepEqualsImmutable";
-import { Context } from "./Context";
-import { Signal } from "./Signal";
-import { ResultReducerSet, GetResultReducers } from "./DataStoreTypes";
-import { DataStoreReducerSet } from "./DataStoreReducerSet";
-import { MutationQueue } from "./MutationQueue";
+import { getWrappedProps } from "./utils/getWrappedProps.js";
+import { IsAdaptive } from "./IsAdaptive.js";
+import { Suspendified } from "./Suspendified.js";
+import { CurrentExecution } from "./CurrentExecution.js";
+import { ActiveQuery } from "./ActiveQuery.js";
+import { ActiveQueries } from "./ActiveQueries.js";
+import { deepEqualsImmutable } from "./utils/deepEqualsImmutable.js";
+import { Context } from "./Context.js";
+import { GetResultReducers } from "./DataStoreTypes.js";
+import { MutationQueue } from "./MutationQueue.js";
 
 export let currentAction: null | ActionState = null;
 export interface ActionState {

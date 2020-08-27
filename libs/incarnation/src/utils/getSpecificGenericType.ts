@@ -1,6 +1,6 @@
-import { refDeterministic } from "./refDeterministic";
-import { AbstractClass, Class } from "../Class";
-import { INNERCLASS } from "../symbols/INNERCLASS";
+import { refDeterministic } from "./refDeterministic.js";
+import { AbstractClass, Class } from "../Class.js";
+import { INNERCLASS } from "../symbols/INNERCLASS.js";
 
 export const getSpecificGenericType = refDeterministic(
   (GenericType: AbstractClass, InnerType: AbstractClass) =>

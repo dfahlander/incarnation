@@ -1,7 +1,7 @@
-import { IsAdaptive } from "./IsAdaptive";
-import { Orig } from "./Orig";
-import { Promisified } from "./Promisified";
-import { IsLazy } from "./IsLazy";
+import { IsAdaptive } from "./IsAdaptive.js";
+import { Orig } from "./Orig.js";
+import { Promisified } from "./Promisified.js";
+import { IsLazy } from "./IsLazy.js";
 
 export type SuspendifiedMethodOrGetter<T> = T extends (
   ...args: infer TArgs

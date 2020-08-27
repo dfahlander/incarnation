@@ -1,9 +1,9 @@
-import { Class, AbstractClass } from "./Class";
-import { Promisified } from "./Promisified";
-import { promisify } from "./promisifier";
-import { inject } from "./inject";
-import { IsAdaptive } from "./IsAdaptive";
-import { Provider } from "./Provider";
+import { Class, AbstractClass } from "./Class.js";
+import { Promisified } from "./Promisified.js";
+import { promisify } from "./promisifier.js";
+import { inject } from "./inject.js";
+import { IsAdaptive } from "./IsAdaptive.js";
+import { Provider } from "./Provider.js";
 
 export function include<T extends object>(
   Class: AbstractClass<T>,

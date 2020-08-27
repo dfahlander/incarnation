@@ -1,7 +1,4 @@
-import { DataStore } from "./DataStore";
-import { AbstractClass, Class } from "./Class";
-import { inject } from "./inject";
-import { getSpecificGenericType } from "./utils/getSpecificGenericType";
+import { DataStore } from "./DataStore.js";
 
 type DataStoreReducerSpec<TMutation extends { type: string }, R> = {
   [MutationTypeString in TMutation["type"]]?: (

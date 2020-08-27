@@ -1,4 +1,4 @@
-import { ActiveQuery } from "./ActiveQuery";
+import { ActiveQuery } from "./ActiveQuery.js";
 
 export class ActiveQueries<
   FN extends (...args: TArgs) => TResult = any,

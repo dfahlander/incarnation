@@ -1,5 +1,5 @@
-import { Mutation } from "./DataStoreTypes";
-import { Signal } from "./Signal";
+import { Mutation } from "./DataStoreTypes.js";
+import { Signal } from "./Signal.js";
 
 export interface MutationQueue {
   queued: Mutation[];

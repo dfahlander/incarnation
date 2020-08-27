@@ -1,5 +1,5 @@
-import { ResultReducerSet, Mutation } from "../DataStoreTypes";
-import { invalidate } from "../invalidate";
+import { ResultReducerSet, Mutation } from "../DataStoreTypes.js";
+import { invalidate } from "../invalidate.js";
 
 export function reduceResult(
   result: any,

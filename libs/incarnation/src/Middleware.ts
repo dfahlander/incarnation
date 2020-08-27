@@ -1,6 +1,6 @@
-import { Class, AbstractClass } from "./Class";
-import { PROVIDER } from "./symbols/PROVIDER";
-import { HasProviderFn, ProviderFn } from "./Provider";
+import { Class, AbstractClass } from "./Class.js";
+import { PROVIDER } from "./symbols/PROVIDER.js";
+import { HasProviderFn, ProviderFn } from "./Provider.js";
 
 export class Middleware<T> implements HasProviderFn {
   [PROVIDER]: ProviderFn;

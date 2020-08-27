@@ -1,4 +1,4 @@
-import { AbstractClass } from "../Class";
+import { AbstractClass } from "../Class.js";
 
 export type CallableClass<
   I = any,

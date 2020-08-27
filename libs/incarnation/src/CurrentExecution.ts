@@ -1,4 +1,4 @@
-import { Signal } from "./Signal";
+import { Signal } from "./Signal.js";
 
 export interface Execution {
   signals: Signal[];

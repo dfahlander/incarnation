@@ -1,4 +1,4 @@
-import { getEffectiveProps } from "./getEffectiveProps";
+import { getEffectiveProps } from "./getEffectiveProps.js";
 
 const nil = Object.create(null);
 

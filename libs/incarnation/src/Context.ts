@@ -1,9 +1,9 @@
-import { Class, AbstractClass } from "./Class";
-import { getWrappedProps } from "./utils/getWrappedProps";
-import { refDeterministic } from "./utils/refDeterministic";
-import { PROVIDER } from "./symbols/PROVIDER";
-import { Provider, ClassMapper, ProviderFn } from "./Provider";
-import { CREATE_CLASS } from "./symbols/CREATE_CLASS";
+import { Class, AbstractClass } from "./Class.js";
+import { getWrappedProps } from "./utils/getWrappedProps.js";
+import { refDeterministic } from "./utils/refDeterministic.js";
+import { PROVIDER } from "./symbols/PROVIDER.js";
+import { Provider, ClassMapper, ProviderFn } from "./Provider.js";
+import { CREATE_CLASS } from "./symbols/CREATE_CLASS.js";
 
 export interface Context {
   readonly mapClass: ClassMapper;

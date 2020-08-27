@@ -1,6 +1,6 @@
-import { Context, deriveContext } from "./Context";
-import { PROVIDER } from "./symbols/PROVIDER";
-import { Provider, resolveProvider, ProviderFn } from "./Provider";
+import { Context, deriveContext } from "./Context.js";
+import { PROVIDER } from "./symbols/PROVIDER.js";
+import { Provider, resolveProvider, ProviderFn } from "./Provider.js";
 
 export class Environment {
   get [PROVIDER](): ProviderFn {

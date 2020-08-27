@@ -1,6 +1,6 @@
-import { Signal } from "./Signal";
-import { ConstructionContext } from "./Context";
-import { CurrentExecution } from "./CurrentExecution";
+import { Signal } from "./Signal.js";
+import { ConstructionContext } from "./Context.js";
+import { CurrentExecution } from "./CurrentExecution.js";
 
 export interface State<T = any> {
   value: T;

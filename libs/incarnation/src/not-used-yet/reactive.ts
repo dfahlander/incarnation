@@ -1,14 +1,14 @@
-import { IsLazy } from "../IsLazy";
-import { IsAdaptive } from "../IsAdaptive";
-import { getWrappedProps } from "../utils/getWrappedProps";
+import { IsLazy } from "../IsLazy.js";
+import { IsAdaptive } from "../IsAdaptive.js";
+import { getWrappedProps } from "../utils/getWrappedProps.js";
 import {
   Observable,
   ObservableConstructor,
   SubscriptionObserver,
-} from "./Observable";
-import { CurrentExecution, Execution } from "../CurrentExecution";
-import { ActiveQuery } from "../ActiveQuery";
-import { SignalSubscription, Signal } from "../Signal";
+} from "./Observable.js";
+import { CurrentExecution, Execution } from "../CurrentExecution.js";
+import { ActiveQuery } from "../ActiveQuery.js";
+import { SignalSubscription, Signal } from "../Signal.js";
 
 export type ReactiveMethodOrGetter<T> = T extends (
   ...args: infer TArgs

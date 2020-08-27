@@ -1,5 +1,3 @@
-import { Signal } from "./Signal";
-
 export type Mutation = { type: string };
 
 export type ResultReducer<T = any> = (

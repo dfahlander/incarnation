@@ -1,9 +1,8 @@
-import { IsLazy } from "./IsLazy";
-import { IsAdaptive } from "./IsAdaptive";
-import { getWrappedProps } from "./utils/getWrappedProps";
-import { Promisified } from "./Promisified";
-import { Context, bindToContext } from "./Context";
-import { promisifySuspenseCall } from "./suspendify";
+import { IsLazy } from "./IsLazy.js";
+import { IsAdaptive } from "./IsAdaptive.js";
+import { getWrappedProps } from "./utils/getWrappedProps.js";
+import { Promisified } from "./Promisified.js";
+import { promisifySuspenseCall } from "./suspendify.js";
 
 export function promisifyMethodOrGetter(fn: (...args: any[]) => any) {
   return function (...args: any[]) {

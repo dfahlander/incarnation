@@ -1,6 +1,6 @@
-import { PROVIDER } from "./symbols/PROVIDER";
-import { Class, AbstractClass } from "./Class";
-import { refDeterministic } from "./utils/refDeterministic";
+import { PROVIDER } from "./symbols/PROVIDER.js";
+import { Class, AbstractClass } from "./Class.js";
+import { refDeterministic } from "./utils/refDeterministic.js";
 
 export type Provider = ProviderFn | HasProviderFn | Class;
 

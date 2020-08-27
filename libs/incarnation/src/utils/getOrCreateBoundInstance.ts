@@ -1,4 +1,4 @@
-import { Class, AbstractClass } from "../Class";
+import { Class, AbstractClass } from "../Class.js";
 import {
   Context,
   runInContext,
@@ -6,10 +6,10 @@ import {
   bindToContext,
   construct,
 } from "../Context";
-import { getWrappedProps } from "./getWrappedProps";
-import { refDeterministic } from "./refDeterministic";
-import { IsLazy } from "../IsLazy";
-import { BOUND_CONTEXT } from "../symbols/BOUND_CONTEXT";
+import { getWrappedProps } from "./getWrappedProps.js";
+import { refDeterministic } from "./refDeterministic.js";
+import { IsLazy } from "../IsLazy.js";
+import { BOUND_CONTEXT } from "../symbols/BOUND_CONTEXT.js";
 
 /** Gets or creates a contextually bound instance for given context and class.
  *

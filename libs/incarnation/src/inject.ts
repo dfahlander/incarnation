@@ -1,7 +1,7 @@
-import { Context, deriveContext, rootContext, baseContext } from "./Context";
-import { Class, AbstractClass } from "./Class";
-import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance";
-import { Provider, resolveProvider } from "./Provider";
+import { Context, deriveContext, rootContext, baseContext } from "./Context.js";
+import { Class, AbstractClass } from "./Class.js";
+import { getOrCreateBoundInstance } from "./utils/getOrCreateBoundInstance.js";
+import { Provider, resolveProvider } from "./Provider.js";
 
 /** Get or create an instance of given class based on current context.
  *

@@ -1,9 +1,9 @@
-import { Signal } from "./Signal";
-import { ResultReducerSet, Mutation } from "./DataStoreTypes";
-import { CurrentExecution } from "./CurrentExecution";
-import { invalidate } from "./invalidate";
-import { MutationQueue } from "./MutationQueue";
-import { reduceResult } from "./utils/reduceResult";
+import { Signal } from "./Signal.js";
+import { ResultReducerSet, Mutation } from "./DataStoreTypes.js";
+import { CurrentExecution } from "./CurrentExecution.js";
+import { invalidate } from "./invalidate.js";
+import { MutationQueue } from "./MutationQueue.js";
+import { reduceResult } from "./utils/reduceResult.js";
 
 let idCounter = 0;
 export class ActiveQuery<TArgs extends any[] = any[], TResult = any> {
