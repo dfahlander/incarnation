@@ -19,7 +19,7 @@ import { setCurrentAction, currentAction } from "incarnation/dist/suspendify";
 
 export function rewriteTree(node: ReactNode): ReactNode {
   if (!node) return node;
-  if (Array.isArray(node)) node.map(rewriteTree);
+  if (Array.isArray(node)) return node.map(rewriteTree);
   if (typeof node !== "object") return node;
   if ("type" in node) {
     let children = node.props?.children;
@@ -51,12 +51,12 @@ const getMemoizedProxyComponent = refDeterministic(
       return getRewrittenClassComponent(c as { new (): React.Component }); // for now.
     } else {
       // Function component
-      return incarnated(c as (props: any) => ReactElement);
+      return getRewrittenFuncComponent(c as (props: any) => ReactElement);
     }
   }
 );
 
-function incarnated(FuncComponent: (props: any) => any) {
+function getRewrittenFuncComponent(FuncComponent: (props: any) => any) {
   const rv = function (props: any) {
     const ctx = useContext(IncarnationReactContext);
     const [count, setCount] = useState(1);
