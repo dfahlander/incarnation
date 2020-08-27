@@ -25,6 +25,9 @@ import { BOUND_CONTEXT } from "./symbols/BOUND_CONTEXT";
 
 let counter = 0;
 
+export interface DataStore {
+  readonly $flavors: DataStoreFlavor<this>;
+}
 export abstract class DataStore {
   private id = ++counter;
   /*constructor() {
@@ -40,7 +43,6 @@ export abstract class DataStore {
   ): Class<DataStore> {
     return createDataStoreClass(requestedClass, mappedClass);
   }
-  readonly $flavors: DataStoreFlavor<this>;
   abstract mutate(mutations: Mutation[]): Promise<PromiseSettledResult<any>[]>;
   static reducers: DataStoreReducerSet<DataStore> = {} as DataStoreReducerSet<
     DataStore
