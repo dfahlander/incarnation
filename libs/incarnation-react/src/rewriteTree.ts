@@ -13,9 +13,12 @@ import {
   SignalSubscription,
   runInContext,
 } from "incarnation";
-import { IncarnationReactContext } from "./IncarnationReactContext";
-import { readContext } from "./readContext";
-import { setCurrentAction, currentAction } from "incarnation/dist/suspendify";
+import { IncarnationReactContext } from "./IncarnationReactContext.js";
+import { readContext } from "./readContext.js";
+import {
+  setCurrentAction,
+  currentAction,
+} from "incarnation/dist/suspendify.js";
 
 export function rewriteTree(node: ReactNode): ReactNode {
   if (!node) return node;

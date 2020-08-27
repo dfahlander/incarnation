@@ -1,5 +1,5 @@
 //import React from "react";
-import { ReactSharedInternals } from "./ReactSharedInternals";
+import { ReactSharedInternals } from "./ReactSharedInternals.js";
 //import ReactDOMServer from "react-dom/server";
 const { ReactCurrentDispatcher } = ReactSharedInternals;
 

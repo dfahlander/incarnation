@@ -1,8 +1,8 @@
 import { Provider, deriveContext, resolveProvider, Context } from "incarnation";
 import React, { ReactNode, useContext, ReactElement } from "react";
-import { IncarnationReactContext } from "./IncarnationReactContext";
-import { rewriteTree } from "./rewriteTree";
-import { readContext } from "./readContext";
+import { IncarnationReactContext } from "./IncarnationReactContext.js";
+import { rewriteTree } from "./rewriteTree.js";
+import { readContext } from "./readContext.js";
 
 // Integrate Incarnation Context with React Context:
 /*Context.integrate((fallbackGetter) => () => {

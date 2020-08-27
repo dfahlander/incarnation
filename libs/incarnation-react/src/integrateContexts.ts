@@ -1,5 +1,5 @@
 import { Context } from "incarnation";
-import { IncarnationReactContext } from "incarnation-react/src/IncarnationReactContext";
+import { IncarnationReactContext } from "./IncarnationReactContext.js";
 
 export function integrateContexts() {
   Context.integrate((next) => {
