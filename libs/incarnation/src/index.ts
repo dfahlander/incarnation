@@ -23,3 +23,4 @@ export { SuspendifiedIfAdaptive } from "./Suspendified.js";
 export { LazyRef } from "./utils/LazyRef.js";
 export { Class, AbstractClass } from "./Class.js";
 export { Middleware } from "./Middleware";
+export { PROVIDER } from "./symbols/PROVIDER";
