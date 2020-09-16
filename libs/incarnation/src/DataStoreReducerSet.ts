@@ -1,6 +1,6 @@
 import { DataStore } from "./DataStore.js";
 
-type DataStoreReducerSpec<TMutation extends { type: string }, R> = {
+type DataStoreReducerSpec<TMutation extends { type: string | number }, R> = {
   [MutationTypeString in TMutation["type"]]?: (
     prev: R,
     op: TMutation extends { type: MutationTypeString } ? TMutation : never,
@@ -11,7 +11,7 @@ type DataStoreReducerSpec<TMutation extends { type: string }, R> = {
 export type DataStoreReducerSet<T = DataStore> = T extends {
   mutate(mutations: Array<infer TMutation>): Promise<any>;
 }
-  ? TMutation extends { type: string }
+  ? TMutation extends { type: string | number }
     ? {
         [P in Exclude<keyof T, keyof DataStore>]?: T[P] extends (
           ...args: infer A

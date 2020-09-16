@@ -1,4 +1,4 @@
-export type Mutation = { type: string };
+export type Mutation = { type: string | number };
 
 export type ResultReducer<T = any> = (
   prevResult: T,
